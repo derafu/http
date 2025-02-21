@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derafu HTTP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown-light.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/themes/prism.min.css" rel="stylesheet" />
+    </head>
+<body>
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg sticky-top bg-body-tertiary mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">Derafu HTTP</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="twig.html">
+                            Twig Template
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="docs@readme=routing.html">
+                            Routing's Doc
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="docs@readme=markdown.html">
+                            Markdown's Doc
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="api">
+                            API 200
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="http://127.0.0.1:9000/api/mustFail">
+                            API 404
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="http://127.0.0.1:9000/mustFail">
+                            Error 404
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="btn btn-primary ms-4" href="https://github.com/derafu/http">
+                            <i class="fa-brands fa-github"></i>
+                            View on Github
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+    <div class="markdown-body"><h1><a id="content-derafu-routing---elegant-php-router-with-plugin-architecture" href="docs@readme=routing.html#content-derafu-routing---elegant-php-router-with-plugin-architecture" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Derafu: Routing - Elegant PHP Router with Plugin Architecture</h1>
+<p><a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://github.com/derafu/routing/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://github.com/derafu/routing/actions/workflows/ci.yml/badge.svg?branch=main&amp;event=push" alt="CI Workflow" /></a>
+<a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a></p>
+<p>A lightweight, extensible PHP routing library that combines simplicity with power through its unique parser-based architecture.</p>
+<h2><a id="content-features" href="docs@readme=routing.html#content-features" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Features</h2>
+<ul>
+<li>🔌 Plugin architecture with swappable parsers.</li>
+<li>🎯 Multiple routing strategies (static, dynamic, filesystem).</li>
+<li>🧩 Easy to extend with custom parsers.</li>
+<li>📁 Built-in filesystem routing for static sites.</li>
+<li>🔄 Support for different content types (.md, .twig, etc.).</li>
+<li>🛠️ Clean separation of concerns.</li>
+<li>🪶 Lightweight with zero dependencies.</li>
+<li>⚡ Fast pattern matching.</li>
+<li>🧪 Comprehensive test coverage.</li>
+</ul>
+<h2><a id="content-why-derafurouting" href="docs@readme=routing.html#content-why-derafurouting" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Why Derafu\Routing?</h2>
+<p>Unlike traditional monolithic routers, Derafu\Routing uses a unique parser-based architecture that offers several advantages:</p>
+<ul>
+<li><strong>Modularity</strong>: Each routing strategy is encapsulated in its own parser.</li>
+<li><strong>Flexibility</strong>: Easy to add new routing patterns without modifying existing code.</li>
+<li><strong>Clarity</strong>: Clear separation between route matching and request handling.</li>
+<li><strong>Extensibility</strong>: Add custom parsers for specific routing needs.</li>
+<li><strong>Predictability</strong>: Each parser has a single responsibility.</li>
+<li><strong>Performance</strong>: Only load the parsers you need.</li>
+</ul>
+<h2><a id="content-installation" href="docs@readme=routing.html#content-installation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Installation</h2>
+<p>Install via Composer:</p>
+<pre><code class="language-bash">composer require derafu/routing
+</code></pre>
+<h2><a id="content-basic-usage" href="docs@readme=routing.html#content-basic-usage" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Basic Usage</h2>
+<pre><code class="language-php">use Derafu\Routing\Router;
+use Derafu\Routing\Dispatcher;
+use Derafu\Routing\Parser\StaticParser;
+use Derafu\Routing\Parser\FileSystemParser;
+
+// Create and configure router.
+$router = new Router();
+$router-&gt;addParser(new StaticParser());
+$router-&gt;addParser(new FileSystemParser([__DIR__ . '/pages']));
+
+// Add routes.
+$router-&gt;addRoute('/', 'HomeController@index');
+$router-&gt;addDirectory(__DIR__ . '/pages');
+
+// Create and configure dispatcher.
+$dispatcher = new Dispatcher([
+    'md' =&gt; fn ($file, $params) =&gt; renderMarkdown($file),
+    'twig' =&gt; fn($file, $params) =&gt; renderTwig($file, $params),
+]);
+
+// Handle request.
+try {
+    $route = $router-&gt;match();
+    echo $dispatcher-&gt;dispatch($route);
+} catch (RouterException $e) {
+    // Handle error.
+}
+</code></pre>
+<h2><a id="content-available-parsers" href="docs@readme=routing.html#content-available-parsers" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Available Parsers</h2>
+<h3><a id="content-staticparser" href="docs@readme=routing.html#content-staticparser" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>StaticParser</h3>
+<p>Handles exact route matches:</p>
+<pre><code class="language-php">$router-&gt;addRoute('/about', 'PagesController@about');
+</code></pre>
+<h3><a id="content-dynamicparser" href="docs@readme=routing.html#content-dynamicparser" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>DynamicParser</h3>
+<p>Supports parameters and patterns:</p>
+<pre><code class="language-php">$router-&gt;addRoute('/users/{id:\d+}', 'UserController@show');
+$router-&gt;addRoute('/blog/{year}/{slug}', 'BlogController@post');
+</code></pre>
+<h3><a id="content-filesystemparser" href="docs@readme=routing.html#content-filesystemparser" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>FileSystemParser</h3>
+<p>Maps URLs to files in directories:</p>
+<pre><code class="language-php">$router-&gt;addDirectory(__DIR__ . '/pages');
+// Examples:
+// /about maps to /pages/about.md
+// /contact maps to /pages/contact.html.twig
+</code></pre>
+<h2><a id="content-creating-custom-parsers" href="docs@readme=routing.html#content-creating-custom-parsers" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Creating Custom Parsers</h2>
+<p>Implement your own routing strategy by creating a parser:</p>
+<pre><code class="language-php">class CustomParser implements ParserInterface
+{
+    public function parse(string $uri, array $routes): ?RouteMatch
+    {
+        // Your custom routing logic.
+    }
+
+    public function supports(Route $route): bool
+    {
+        // Define what routes this parser can handle.
+    }
+}
+
+$router-&gt;addParser(new CustomParser());
+</code></pre>
+<h2><a id="content-file-based-routing-example" href="docs@readme=routing.html#content-file-based-routing-example" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>File-based Routing Example</h2>
+<p>Perfect for static sites:</p>
+<pre><code>pages/
+├── about.md
+├── contact.html.twig
+└── blog/
+    ├── post-1.md
+    └── post-2.md
+</code></pre>
+<p>URLs are automatically mapped to files:</p>
+<ul>
+<li><code>/about</code> → <code>pages/about.md</code></li>
+<li><code>/contact</code> → <code>pages/contact.html.twig</code></li>
+<li><code>/blog/post-1</code> → <code>pages/blog/post-1.md</code></li>
+</ul>
+<h2><a id="content-contributing" href="docs@readme=routing.html#content-contributing" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Contributing</h2>
+<p>Contributions are welcome! Please feel free to submit a Pull Request.</p>
+<h2><a id="content-license" href="docs@readme=routing.html#content-license" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>License</h2>
+<p>This library is licensed under the MIT License. See the <code>LICENSE</code> file for more details.</p>
+</div>
+</div>
+
+    <!-- Footer -->
+    <footer class="sticky-bottom py-3 bg-body-tertiary mt-4">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="text-body-secondary">
+                        &copy; 2025 Derafu HTTP -
+                        <a href="https://github.com/derafu/http" class="text-decoration-none">
+                            github.com/derafu/http
+                        </a><br/>
+                        <small>Standard-Compliant HTTP Library with Extended Features</small>
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="text-body-secondary">
+                        With love <i class="fa-solid fa-heart text-danger"></i> from
+                        <a href="https://www.derafu.org" target="_blank" class="text-decoration-none">Derafu ORG</a><br/>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    </body>
+</html>

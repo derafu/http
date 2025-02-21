@@ -17,7 +17,7 @@ jobs:
         run: sudo apt-get install -y php-cli php-curl php-mbstring php-xml composer
 
       - name: Install dependencies
-        run: composer install --no-dev --optimize-autoloader && composer require derafu/routing derafu/twig derafu/markdown
+        run: composer install --no-dev --optimize-autoloader && composer require symfony/yaml derafu/markdown
 
       - name: Start PHP server
         run: php -d display_errors=1 -S 127.0.0.1:9000 -t public/ &

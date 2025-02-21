@@ -76,14 +76,16 @@
 <li><strong>Content Negotiation</strong>: Intelligent format detection and response transformation.</li>
 <li><strong>Problem Details</strong>: RFC 7807 implementation for structured error handling.</li>
 <li><strong>PSR Compliance</strong>: Built on PSR-7 and PSR-15 standards.</li>
+<li><strong>Middleware Architecture</strong>: Flexible request/response processing pipeline.</li>
 </ul>
 <h3><a id="content--key-features" href="index.html#content--key-features" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>✨ <strong>Key Features</strong></h3>
 <ul>
 <li><strong>Smart Request Handling</strong>: Safe access to query, post, and JSON data.</li>
 <li><strong>Intelligent Responses</strong>: Automatic content negotiation and format transformation.</li>
 <li><strong>Structured Errors</strong>: Complete RFC 7807 Problem Details implementation.</li>
-<li><strong>Modular Design</strong>: Core HTTP functionality with optional middleware support.</li>
+<li><strong>Modular Design</strong>: Core HTTP functionality with middleware support.</li>
 <li><strong>Type Safety</strong>: Use of enums for HTTP status codes and content types.</li>
+<li><strong>Middleware Pipeline</strong>: PSR-15 compliant middleware chain for request processing.</li>
 </ul>
 <h2><a id="content-installation" href="index.html#content-installation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Installation</h2>
 <pre><code class="language-bash">composer require derafu/http
@@ -93,8 +95,6 @@
 <pre><code class="language-php">use Derafu\Http\Kernel;
 use Derafu\Kernel\Environment;
 
-// In real project change this to:
-// require_once dirname(__DIR__) . '/vendor/derafu/http/app/bootstrap.php';
 require_once dirname(__DIR__) . '/app/bootstrap.php';
 
 return fn (array $context): Kernel =&gt; new Kernel(new Environment(
@@ -103,8 +103,47 @@ return fn (array $context): Kernel =&gt; new Kernel(new Environment(
     $context
 ));
 </code></pre>
-<p>Test the application with:</p>
-<pre><code class="language-bash">php -S localhost:9000 -t public
+<h3><a id="content-middleware-configuration" href="index.html#content-middleware-configuration" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Middleware Configuration</h3>
+<p>The library uses PSR-15 middlewares for request processing. Configure your middleware stack in the services file, for example <code>services.yaml</code>:</p>
+<pre><code class="language-yaml"># Core middlewares in required order.
+Psr\Http\Server\RequestHandlerInterface:
+    class: Derafu\Http\Service\RequestHandler
+    public: true
+    arguments:
+        $middlewares:
+            - '@Derafu\Http\Middleware\RequestFactoryMiddleware'
+            - '@Derafu\Http\Middleware\RouterMiddleware'
+            - '@Derafu\Http\Middleware\DispatcherMiddleware'
+            - '@Derafu\Http\Middleware\ResponseNormalizerMiddleware'
+
+# Register individual middlewares.
+Derafu\Http\Middleware\RequestFactoryMiddleware: ~
+Derafu\Http\Middleware\RouterMiddleware: ~
+Derafu\Http\Middleware\DispatcherMiddleware: ~
+Derafu\Http\Middleware\ResponseNormalizerMiddleware: ~
+</code></pre>
+<h3><a id="content-core-middlewares" href="index.html#content-core-middlewares" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Core Middlewares</h3>
+<p>The library includes four essential middlewares that must be configured in order:</p>
+<ol>
+<li><strong>RequestFactoryMiddleware</strong>: Converts PSR-7 requests to Derafu requests.</li>
+<li><strong>RouterMiddleware</strong>: Handles URL routing and route matching.</li>
+<li><strong>DispatcherMiddleware</strong>: Executes route handlers (controllers, closures or templates).</li>
+<li><strong>ResponseNormalizerMiddleware</strong>: Ensures PSR-7 compliant responses.</li>
+</ol>
+<h3><a id="content-custom-middlewares" href="index.html#content-custom-middlewares" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Custom Middlewares</h3>
+<p>Create custom middlewares by implementing PSR-15’s <code>MiddlewareInterface</code>:</p>
+<pre><code class="language-php">class CustomMiddleware implements MiddlewareInterface
+{
+    public function process(
+        ServerRequestInterface $request,
+        RequestHandlerInterface $handler
+    ): ResponseInterface {
+        // Process request.
+        $response = $handler-&gt;handle($request);
+        // Process response.
+        return $response;
+    }
+}
 </code></pre>
 <h3><a id="content-working-with-requests" href="index.html#content-working-with-requests" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Working with Requests</h3>
 <pre><code class="language-php">// Safe access to request data.
@@ -117,7 +156,7 @@ $format = $request-&gt;getPreferredFormat();
 </code></pre>
 <h3><a id="content-creating-responses" href="index.html#content-creating-responses" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Creating Responses</h3>
 <pre><code class="language-php">// Automatic content negotiation.
-// Returns JSON for API requests in `/api` paths.
+// Returns JSON for API requests in `/api` paths
 return ['status' =&gt; 'ok'];
 
 // Explicit responses.

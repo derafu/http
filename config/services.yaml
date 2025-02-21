@@ -13,6 +13,17 @@ services:
     Psr\Http\Server\RequestHandlerInterface:
         class: Derafu\Http\Service\RequestHandler
         public: true
+        arguments:
+            $middlewares:
+                - '@Derafu\Http\Middleware\RequestFactoryMiddleware'
+                - '@Derafu\Http\Middleware\RouterMiddleware'
+                - '@Derafu\Http\Middleware\DispatcherMiddleware'
+                - '@Derafu\Http\Middleware\ResponseNormalizerMiddleware'
+
+    Derafu\Http\Middleware\RequestFactoryMiddleware: ~
+    Derafu\Http\Middleware\RouterMiddleware: ~
+    Derafu\Http\Middleware\DispatcherMiddleware: ~
+    Derafu\Http\Middleware\ResponseNormalizerMiddleware: ~
 
     Derafu\Http\Contract\RequestFactoryInterface:
         class: Derafu\Http\Factory\RequestFactory

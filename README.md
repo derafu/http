@@ -15,14 +15,16 @@ Most HTTP libraries either do too much or too little. Derafu\Http provides:
 - **Content Negotiation**: Intelligent format detection and response transformation.
 - **Problem Details**: RFC 7807 implementation for structured error handling.
 - **PSR Compliance**: Built on PSR-7 and PSR-15 standards.
+- **Middleware Architecture**: Flexible request/response processing pipeline.
 
 ### ✨ **Key Features**
 
 - **Smart Request Handling**: Safe access to query, post, and JSON data.
 - **Intelligent Responses**: Automatic content negotiation and format transformation.
 - **Structured Errors**: Complete RFC 7807 Problem Details implementation.
-- **Modular Design**: Core HTTP functionality with optional middleware support.
+- **Modular Design**: Core HTTP functionality with middleware support.
 - **Type Safety**: Use of enums for HTTP status codes and content types.
+- **Middleware Pipeline**: PSR-15 compliant middleware chain for request processing.
 
 ## Installation
 
@@ -38,8 +40,6 @@ composer require derafu/http
 use Derafu\Http\Kernel;
 use Derafu\Kernel\Environment;
 
-// In real project change this to:
-// require_once dirname(__DIR__) . '/vendor/derafu/http/app/bootstrap.php';
 require_once dirname(__DIR__) . '/app/bootstrap.php';
 
 return fn (array $context): Kernel => new Kernel(new Environment(
@@ -49,10 +49,55 @@ return fn (array $context): Kernel => new Kernel(new Environment(
 ));
 ```
 
-Test the application with:
+### Middleware Configuration
 
-```bash
-php -S localhost:9000 -t public
+The library uses PSR-15 middlewares for request processing. Configure your middleware stack in the services file, for example `services.yaml`:
+
+```yaml
+# Core middlewares in required order.
+Psr\Http\Server\RequestHandlerInterface:
+    class: Derafu\Http\Service\RequestHandler
+    public: true
+    arguments:
+        $middlewares:
+            - '@Derafu\Http\Middleware\RequestFactoryMiddleware'
+            - '@Derafu\Http\Middleware\RouterMiddleware'
+            - '@Derafu\Http\Middleware\DispatcherMiddleware'
+            - '@Derafu\Http\Middleware\ResponseNormalizerMiddleware'
+
+# Register individual middlewares.
+Derafu\Http\Middleware\RequestFactoryMiddleware: ~
+Derafu\Http\Middleware\RouterMiddleware: ~
+Derafu\Http\Middleware\DispatcherMiddleware: ~
+Derafu\Http\Middleware\ResponseNormalizerMiddleware: ~
+```
+
+### Core Middlewares
+
+The library includes four essential middlewares that must be configured in order:
+
+1. **RequestFactoryMiddleware**: Converts PSR-7 requests to Derafu requests.
+2. **RouterMiddleware**: Handles URL routing and route matching.
+3. **DispatcherMiddleware**: Executes route handlers (controllers, closures or templates).
+4. **ResponseNormalizerMiddleware**: Ensures PSR-7 compliant responses.
+
+### Custom Middlewares
+
+Create custom middlewares by implementing PSR-15's `MiddlewareInterface`:
+
+```php
+class CustomMiddleware implements MiddlewareInterface
+{
+    public function process(
+        ServerRequestInterface $request,
+        RequestHandlerInterface $handler
+    ): ResponseInterface {
+        // Process request.
+        $response = $handler->handle($request);
+        // Process response.
+        return $response;
+    }
+}
 ```
 
 ### Working with Requests
@@ -71,7 +116,7 @@ $format = $request->getPreferredFormat();
 
 ```php
 // Automatic content negotiation.
-// Returns JSON for API requests in `/api` paths.
+// Returns JSON for API requests in `/api` paths
 return ['status' => 'ok'];
 
 // Explicit responses.

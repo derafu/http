@@ -12,121 +12,78 @@ declare(strict_types=1);
 
 namespace Derafu\Http\Service;
 
-use Derafu\Http\Contract\DispatcherInterface;
 use Derafu\Http\Contract\ProblemFactoryInterface;
 use Derafu\Http\Contract\ProblemHandlerInterface;
-use Derafu\Http\Contract\RequestFactoryInterface;
 use Derafu\Http\Contract\RequestInterface;
-use Derafu\Http\Contract\ResponseInterface;
-use Derafu\Http\Enum\ContentType;
-use Derafu\Http\Response;
-use Derafu\Routing\Contract\RouterInterface;
+use LogicException;
+use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as PsrRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Throwable;
 
 /**
- * HTTP request handler that handles incoming requests.
+ * Manages a stack of PSR-15 middlewares.
  *
- * This class serves as the main entry point for handling HTTP requests. It:
+ * This class is responsible for:
  *
- *   - Routes requests to appropriate handlers.
- *   - Dispatches the request to the matched handler.
- *   - Handles errors and exceptions.
- *   - Normalizes responses to ensure PSR-7 compliance.
- *
- * The request handler follows these steps:
- *
- *   1. Matches the request URI to a route.
- *   2. Dispatches the request to the matched handler.
- *   3. Handles any errors that occur during processing.
- *   4. Normalizes the response to ensure it's PSR-7 compliant.
+ *   - Maintaining the middleware queue.
+ *   - Processing middlewares in order.
+ *   - Generating a error when no middlewares remain.
  */
 class RequestHandler implements RequestHandlerInterface
 {
     /**
-     * Creates a new RequestHandler instance.
+     * @var MiddlewareInterface[]
+     */
+    private array $middlewares = [];
+
+    /**
+     * Current position in middleware stack.
      *
-     * @param RequestFactoryInterface $requestFactory
-     * @param RouterInterface $router
-     * @param DispatcherInterface $dispatcher
-     * @param ProblemFactoryInterface $errorFactory
-     * @param ProblemHandlerInterface $errorHandler
+     * @var int
+     */
+    private int $currentIndex = 0;
+
+    /**
+     * Creates a new middleware stack.
+     *
+     * @param ProblemFactoryInterface $problemFactory
+     * @param ProblemHandlerInterface $problemHandler
+     * @param MiddlewareInterface ...$middlewares Optional initial middleware
+     * stack.
      */
     public function __construct(
-        private readonly RequestFactoryInterface $requestFactory,
-        private readonly RouterInterface $router,
-        private readonly DispatcherInterface $dispatcher,
-        private readonly ProblemFactoryInterface $errorFactory,
-        private readonly ProblemHandlerInterface $errorHandler
+        private readonly ProblemFactoryInterface $problemFactory,
+        private readonly ProblemHandlerInterface $problemHandler,
+        MiddlewareInterface ...$middlewares
     ) {
+        $this->middlewares = $middlewares;
     }
 
     /**
-     * Handles an incoming HTTP request.
-     *
-     * This method implements the main request handling flow:
-     *
-     *   1. Normalizes the request.
-     *   2. Attempts to match the request path to a route.
-     *   3. Dispatches the request to the matched handler.
-     *   4. Handles any errors that occur during processing.
-     *   5. Normalizes the response.
-     *
-     * @param PsrRequestInterface $request The HTTP request.
-     * @return ResponseInterface A PSR-7 compliant response.
+     * {@inheritDoc}
      */
-    public function handle(PsrRequestInterface $request): ResponseInterface
+    public function handle(PsrRequestInterface $request): PsrResponseInterface
     {
-        $request = $this->requestFactory->createFromPsrRequest($request);
-
         try {
-            $route = $this->router->match($request->getUri()->getPath());
-            $response = $this->dispatcher->dispatch($route, $request);
-        } catch (Throwable $e) {
-            $error = $this->errorFactory->create($e, $request);
-            $response = $this->errorHandler->handle($error);
-        }
-
-        return $this->normalizeResponse($request, $response);
-    }
-
-    /**
-     * Normalizes handler responses to ensure PSR-7 compliance.
-     *
-     * This method:
-     *
-     *   1. Returns ResponseInterface instances unchanged (unless missing
-     *      Content-Type).
-     *   2. Determines appropriate Content-Type if not specified.
-     *   3. Formats response data according to Content-Type.
-     *
-     * @param RequestInterface $request The incoming HTTP request.
-     * @param mixed $response The response data to normalize.
-     * @return ResponseInterface
-     */
-    protected function normalizeResponse(
-        RequestInterface $request,
-        mixed $response
-    ): ResponseInterface {
-        // If it is already an answer, just check/add Content-Type.
-        if ($response instanceof ResponseInterface) {
-            if (!$response->hasHeader('Content-Type')) {
-                return $response->withContentType(
-                    $request->getPreferredContentType()
+            // If there are no more middlewares, use the fallback handler.
+            if ($this->currentIndex === count($this->middlewares)) {
+                throw new LogicException(
+                    'No response was generated by the middleware chain.'
                 );
             }
-            return $response;
+
+            // Get next middleware and increment position.
+            $middleware = $this->middlewares[$this->currentIndex];
+            $this->currentIndex++;
+
+            // Process the middleware.
+            return $middleware->process($request, $this);
+        } catch (Throwable $e) {
+            assert($request instanceof RequestInterface);
+            $problem = $this->problemFactory->create($e, $request);
+            return $this->problemHandler->handle($problem);
         }
-
-        // For other types, determine format and create response.
-        $format = $request->getPreferredContentType();
-        $newResponse = new Response();
-
-        if ($format === ContentType::JSON) {
-            return $newResponse->asJson($response);
-        }
-
-        return $newResponse->asText($response, $format);
     }
 }

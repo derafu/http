@@ -26,7 +26,8 @@ jobs:
         run: |
           mkdir -p output
           wget --mirror --convert-links --adjust-extension --page-requisites --no-parent \
-               --directory-prefix=output --no-host-directories http://127.0.0.1:9000/
+               --directory-prefix=output --no-host-directories --restrict-file-names=windows \
+               http://127.0.0.1:9000/
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4

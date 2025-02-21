@@ -28,8 +28,8 @@ jobs:
           wget --version
           wget --mirror --convert-links --adjust-extension --page-requisites --no-parent \
                --directory-prefix=output --no-host-directories \
-               --restrict-file-names=windows -e robots=off --backup-converted \
-               http://127.0.0.1:9000/
+               --restrict-file-names=windows \
+               http://127.0.0.1:9000/ || [[ $? == 8 ]]
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4

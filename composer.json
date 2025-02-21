@@ -1,0 +1,54 @@
+{
+    "name": "derafu/http",
+    "description": "Derafu: HTTP - Standard-Compliant HTTP Library with Extended Features.",
+    "type": "library",
+    "homepage": "https://derafu.org/http",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Esteban De La Fuente Rubio / Derafu",
+            "homepage": "https://www.derafu.org"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/derafu/http/issues",
+        "source": "https://github.com/derafu/http"
+    },
+    "autoload": {
+        "psr-4": {
+            "Derafu\\Http\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Derafu\\TestsHttp\\": "tests/src/"
+        }
+    },
+    "require": {
+        "derafu/kernel": "dev-main",
+        "derafu/routing": "dev-main",
+        "derafu/renderer": "dev-main",
+        "derafu/translation": "dev-main",
+        "psr/http-server-handler": "^1.0",
+        "nyholm/psr7": "^1.8",
+        "php-di/invoker": "^2.3"
+    },
+    "require-dev": {
+        "ext-xdebug": "*",
+        "friendsofphp/php-cs-fixer": "^3.63",
+        "phpstan/phpstan": "^1.12",
+        "phpunit/phpunit": "^11.4",
+        "symfony/yaml": "^7.2",
+        "derafu/markdown": "^1.0"
+    },
+    "scripts": {
+        "docs": "php tools/phpdocumentor run --config=phpdoc.xml",
+        "tests": "XDEBUG_MODE=coverage vendor/bin/phpunit --configuration=phpunit.xml",
+        "phpcs-fix": "php-cs-fixer fix -v --config=php-cs-fixer.php",
+        "phpcs-fix-dry-run": "php-cs-fixer fix -v --dry-run --diff --config=php-cs-fixer.php",
+        "phpstan": "phpstan analyse --configuration=phpstan.neon --memory-limit=1G",
+        "phpstan-export": "phpstan analyse --configuration=phpstan.neon --level 9 --generate-baseline"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

@@ -1,0 +1,35 @@
+name: Deploy Static Website
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PHP and Composer
+        run: sudo apt-get install -y php-cli php-curl php-mbstring php-xml composer
+
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader && composer require derafu/routing derafu/twig derafu/markdown
+
+      - name: Start PHP server
+        run: php -d display_errors=1 -S 127.0.0.1:9000 -t public/ &
+
+      - name: Download static HTML with wget
+        run: |
+          mkdir -p output
+          wget --mirror --convert-links --adjust-extension --page-requisites --no-parent \
+               --directory-prefix=output --no-host-directories http://127.0.0.1:9000/
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: output

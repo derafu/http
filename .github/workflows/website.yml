@@ -25,8 +25,10 @@ jobs:
       - name: Download static HTML with wget
         run: |
           mkdir -p output
+          wget --version
           wget --mirror --convert-links --adjust-extension --page-requisites --no-parent \
-               --directory-prefix=output --no-host-directories --restrict-file-names=windows \
+               --directory-prefix=output --no-host-directories \
+               --restrict-file-names=windows -e robots=off --backup-converted \
                http://127.0.0.1:9000/
 
       - name: Deploy to GitHub Pages

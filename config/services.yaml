@@ -15,11 +15,15 @@ services:
         public: true
         arguments:
             $middlewares:
+                - '@Derafu\Http\Middleware\StaticFilesMiddleware'
                 - '@Derafu\Http\Middleware\RequestFactoryMiddleware'
                 - '@Derafu\Http\Middleware\RouterMiddleware'
                 - '@Derafu\Http\Middleware\DispatcherMiddleware'
                 - '@Derafu\Http\Middleware\ResponseNormalizerMiddleware'
 
+    Derafu\Http\Middleware\StaticFilesMiddleware:
+        arguments:
+            $directory: '%kernel.project_dir%/public/static'
     Derafu\Http\Middleware\RequestFactoryMiddleware: ~
     Derafu\Http\Middleware\RouterMiddleware: ~
     Derafu\Http\Middleware\DispatcherMiddleware: ~

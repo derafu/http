@@ -172,14 +172,9 @@ class Request implements RequestInterface
     {
         // Check URL extension.
         $path = $this->getUri()->getPath();
-        $extension = pathinfo($path, PATHINFO_EXTENSION);
-        if ($extension) {
-            return match($extension) {
-                'json' => ContentType::JSON,
-                'html' => ContentType::HTML,
-                'txt' => ContentType::PLAIN,
-                default => $this->getAcceptedContentType()
-            };
+        $contentType = ContentType::fromFilename($path);
+        if ($contentType !== ContentType::OCTET_STREAM) {
+            return $contentType;
         }
 
         // Check if it's an API request.

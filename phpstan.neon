@@ -3,7 +3,5 @@ parameters:
     level: 5
     # Source code directories to be reviewed.
     paths:
-        - app
-        - public
         - src
         - tests

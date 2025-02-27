@@ -40,16 +40,28 @@
         "phpstan/phpstan": "^1.12",
         "phpunit/phpunit": "^11.4",
         "symfony/yaml": "^7.2",
-        "derafu/markdown": "^1.0"
+        "derafu/foundation": "dev-main"
     },
     "scripts": {
         "docs": "php tools/phpdocumentor run --config=phpdoc.xml",
         "tests": "XDEBUG_MODE=coverage vendor/bin/phpunit --configuration=phpunit.xml",
-        "phpcs-fix": "php-cs-fixer fix -v --config=php-cs-fixer.php",
-        "phpcs-fix-dry-run": "php-cs-fixer fix -v --dry-run --diff --config=php-cs-fixer.php",
-        "phpstan": "phpstan analyse --configuration=phpstan.neon --memory-limit=1G",
-        "phpstan-export": "phpstan analyse --configuration=phpstan.neon --level 9 --generate-baseline"
+        "phpcs-fix": "vendor/bin/php-cs-fixer fix -v --config=php-cs-fixer.php",
+        "phpcs-fix-dry-run": "vendor/bin/php-cs-fixer fix -v --dry-run --diff --config=php-cs-fixer.php",
+        "phpstan": "vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=1G",
+        "phpstan-export": "vendor/bin/phpstan analyse --configuration=phpstan.neon --level 9 --generate-baseline",
+        "build": "npm run build",
+        "post-install-cmd": [
+            "Derafu\\Foundation\\Installer::copyFiles"
+        ],
+        "post-update-cmd": [
+            "Derafu\\Foundation\\Installer::copyFiles"
+        ]
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true
+        }
+    }
 }

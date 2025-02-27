@@ -8,8 +8,8 @@
   handler: '%kernel.project_dir%/templates/error.html.twig'
   name: errorpage
 
-- route: /api
-  handler: 'Derafu\Http\Controller\ApiController::index'
+# - route: /api
+#   handler: 'Derafu\Http\Controller\ApiController::index'
 
-- route: /docs
-  handler: 'Derafu\Http\Controller\DocsController::index'
+# - route: /docs
+#   handler: 'Derafu\Http\Controller\DocsController::index'

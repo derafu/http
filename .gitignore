@@ -2,6 +2,7 @@
 var/
 vendor/
 composer.lock
+assets/img/**.svg
 
 # Node.js and Vite build.
 node_modules/

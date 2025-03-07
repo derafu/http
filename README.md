@@ -1,7 +1,11 @@
 # Derafu: HTTP - Standard-Compliant HTTP Library with Extended Features
 
-[![CI Workflow](https://github.com/derafu/http/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/derafu/http/actions/workflows/ci.yml?query=branch%3Amain)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+![GitHub last commit](https://img.shields.io/github/last-commit/derafu/http/main)
+![CI Workflow](https://github.com/derafu/http/actions/workflows/ci.yml/badge.svg?branch=main&event=push)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/derafu/http)
+![GitHub Issues](https://img.shields.io/github/issues-raw/derafu/http)
+![Total Downloads](https://poser.pugx.org/derafu/http/downloads)
+![Monthly Downloads](https://poser.pugx.org/derafu/http/d/monthly)
 
 A PSR and RFC compliant HTTP library that provides elegant request/response handling, content negotiation and problem details for PHP applications.
 

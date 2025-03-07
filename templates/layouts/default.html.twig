@@ -9,9 +9,49 @@
     {% endblock %}
 
     {% block main %}
-        <main>
-            {% block content %}{% endblock %}
-        </main>
+        <div class="container">
+            <div class="row">
+                <main class="col-md-9">
+                    {% block content %}{% endblock %}
+                </main>
+                <div class="col-md-3 py-4">
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">Package Info</div>
+                                <span class="smal text-muted">
+                                    <a href="https://github.com/derafu/http" target="_blank" class="link-secondary text-decoration-none">
+                                        <i class="fa-brands fa-github"></i>
+                                        derafu/http
+                                    </a>
+                                </span>
+                                <div class="my-2">
+                                    <img src="https://img.shields.io/github/stars/derafu/http" alt="GitHub Repo stars">
+                                    <img src="https://img.shields.io/github/forks/derafu/http" alt="GitHub forks">
+                                </div>
+                            </div>
+                        </li>
+                        <a href="/" class="list-group-item list-group-item-action {% if request.uri.path == '/' %}active{% endif %}">
+                            README
+                        </a>
+                    </div>
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                            <div class="fw-bold">Docs</div>
+                            <span class="smal text-muted">Guides & Examples</span>
+                            </div>
+                        </li>
+                        <a href="/http-flow" class="list-group-item list-group-item-action {% if request.uri.path == '/http-flow' %}active{% endif %}">
+                            HTTP Flow
+                        </a>
+                        <a href="/design-principles" class="list-group-item list-group-item-action {% if request.uri.path == '/design-principles' %}active{% endif %}">
+                            Design Principles
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     {% endblock %}
 
     {% block footer %}

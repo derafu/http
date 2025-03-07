@@ -7,17 +7,27 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown-light.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.css" rel="stylesheet" />
     <link href="https://derafu.org/foundation/css/styles.min.css" rel="stylesheet" />
     </head>
 <body class="derafu-theme-earthstone">
                 <div id="header-container" class="sticky-top"></div>
     
-            <main>
-            <div class="container py-4">
+            <div class="container">
+            <div class="row">
+                <main class="col-md-9">
+                    <div class="container py-4">
     <div class="markdown-body"><h1><a id="content-derafu-http---standard-compliant-http-library-with-extended-features" href="index.html#content-derafu-http---standard-compliant-http-library-with-extended-features" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Derafu: HTTP - Standard-Compliant HTTP Library with Extended Features</h1>
-<p><a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://github.com/derafu/http/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://github.com/derafu/http/actions/workflows/ci.yml/badge.svg?branch=main&amp;event=push" alt="CI Workflow" /></a>
-<a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a></p>
+<p><img src="https://img.shields.io/github/last-commit/derafu/http/main" alt="GitHub last commit" />
+<img src="https://github.com/derafu/http/actions/workflows/ci.yml/badge.svg?branch=main&amp;event=push" alt="CI Workflow" />
+<img src="https://img.shields.io/github/languages/code-size/derafu/http" alt="GitHub code size in bytes" />
+<img src="https://img.shields.io/github/issues-raw/derafu/http" alt="GitHub Issues" />
+<img src="https://poser.pugx.org/derafu/http/downloads" alt="Total Downloads" />
+<img src="https://poser.pugx.org/derafu/http/d/monthly" alt="Monthly Downloads" /></p>
 <p>A PSR and RFC compliant HTTP library that provides elegant request/response handling, content negotiation and problem details for PHP applications.</p>
 <h2><a id="content-why-derafuhttp" href="index.html#content-why-derafuhttp" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Why Derafu\Http?</h2>
 <h3><a id="content--simple-but-not-limited-http-handling" href="index.html#content--simple-but-not-limited-http-handling" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>🎯 <strong>Simple, but not limited, HTTP Handling</strong></h3>
@@ -39,11 +49,11 @@
 <li><strong>Middleware Pipeline</strong>: PSR-15 compliant middleware chain for request processing.</li>
 </ul>
 <h2><a id="content-installation" href="index.html#content-installation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Installation</h2>
-<pre><code class="language-bash">composer require derafu/http
+<pre><code class="line-numbers match-braces language-bash">composer require derafu/http
 </code></pre>
 <h2><a id="content-basic-usage" href="index.html#content-basic-usage" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Basic Usage</h2>
 <h3><a id="content-publicindexphp" href="index.html#content-publicindexphp" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>public/index.php</h3>
-<pre><code class="language-php">use Derafu\Http\Kernel;
+<pre><code class="line-numbers match-braces language-php">use Derafu\Http\Kernel;
 use Derafu\Kernel\Environment;
 
 require_once dirname(__DIR__) . '/app/bootstrap.php';
@@ -56,7 +66,7 @@ return fn (array $context): Kernel =&gt; new Kernel(new Environment(
 </code></pre>
 <h3><a id="content-middleware-configuration" href="index.html#content-middleware-configuration" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Middleware Configuration</h3>
 <p>The library uses PSR-15 middlewares for request processing. Configure your middleware stack in the services file, for example <code>services.yaml</code>:</p>
-<pre><code class="language-yaml"># Core middlewares in required order.
+<pre><code class="line-numbers match-braces language-yaml"># Core middlewares in required order.
 Psr\Http\Server\RequestHandlerInterface:
     class: Derafu\Http\Service\RequestHandler
     public: true
@@ -83,7 +93,7 @@ Derafu\Http\Middleware\ResponseNormalizerMiddleware: ~
 </ol>
 <h3><a id="content-custom-middlewares" href="index.html#content-custom-middlewares" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Custom Middlewares</h3>
 <p>Create custom middlewares by implementing PSR-15’s <code>MiddlewareInterface</code>:</p>
-<pre><code class="language-php">class CustomMiddleware implements MiddlewareInterface
+<pre><code class="line-numbers match-braces language-php">class CustomMiddleware implements MiddlewareInterface
 {
     public function process(
         ServerRequestInterface $request,
@@ -97,7 +107,7 @@ Derafu\Http\Middleware\ResponseNormalizerMiddleware: ~
 }
 </code></pre>
 <h3><a id="content-working-with-requests" href="index.html#content-working-with-requests" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Working with Requests</h3>
-<pre><code class="language-php">// Safe access to request data.
+<pre><code class="line-numbers match-braces language-php">// Safe access to request data.
 $id = $request-&gt;query('id', 0);
 $data = $request-&gt;json();
 $file = $request-&gt;file('document');
@@ -106,7 +116,7 @@ $file = $request-&gt;file('document');
 $format = $request-&gt;getPreferredFormat();
 </code></pre>
 <h3><a id="content-creating-responses" href="index.html#content-creating-responses" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Creating Responses</h3>
-<pre><code class="language-php">// Automatic content negotiation.
+<pre><code class="line-numbers match-braces language-php">// Automatic content negotiation.
 // Returns JSON for API requests in `/api` paths
 return ['status' =&gt; 'ok'];
 
@@ -118,7 +128,7 @@ return (new Response())-&gt;redirect('https://www.example.com');
 </code></pre>
 <h3><a id="content-error-handling-with-problem-details" href="index.html#content-error-handling-with-problem-details" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Error Handling with Problem Details</h3>
 <p>Any exception will be treated as “Problem Detail” (RFC 7807). To have control over all fields, exceptions must implement <code>HttpExceptionInterface</code>.</p>
-<pre><code class="language-json">{
+<pre><code class="line-numbers match-braces language-json">{
     &quot;type&quot;: &quot;about:blank&quot;,
     &quot;title&quot;: &quot;Not Found&quot;,
     &quot;status&quot;: 404,
@@ -156,12 +166,56 @@ return (new Response())-&gt;redirect('https://www.example.com');
 <p>This package is open-sourced software licensed under the <a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://opensource.org/licenses/MIT">MIT license</a>.</p>
 </div>
 </div>
-        </main>
+                </main>
+                <div class="col-md-3 py-4">
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">Package Info</div>
+                                <span class="smal text-muted">
+                                    <a href="https://github.com/derafu/http" target="_blank" class="link-secondary text-decoration-none">
+                                        <i class="fa-brands fa-github"></i>
+                                        derafu/http
+                                    </a>
+                                </span>
+                                <div class="my-2">
+                                    <img src="https://img.shields.io/github/stars/derafu/http" alt="GitHub Repo stars">
+                                    <img src="https://img.shields.io/github/forks/derafu/http" alt="GitHub forks">
+                                </div>
+                            </div>
+                        </li>
+                        <a href="index.html" class="list-group-item list-group-item-action active">
+                            README
+                        </a>
+                    </div>
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                            <div class="fw-bold">Docs</div>
+                            <span class="smal text-muted">Guides & Examples</span>
+                            </div>
+                        </li>
+                        <a href="http-flow.html" class="list-group-item list-group-item-action ">
+                            HTTP Flow
+                        </a>
+                        <a href="design-principles.html" class="list-group-item list-group-item-action ">
+                            Design Principles
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     
             <div id="footer-container"></div>
 <script src="https://derafu.org/foundation/js/derafu.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/show-language/prism-show-language.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.js"></script>
     </body>
 </html>

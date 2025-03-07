@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derafu: HTTP - Standard-Compliant HTTP Library with Extended Features</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown-light.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.css" rel="stylesheet" />
+    <link href="https://derafu.org/foundation/css/styles.min.css" rel="stylesheet" />
+    </head>
+<body class="derafu-theme-earthstone">
+                <div id="header-container" class="sticky-top"></div>
+    
+            <div class="container">
+            <div class="row">
+                <main class="col-md-9">
+                    <div class="container py-4">
+    <div class="markdown-body"><h1><a id="content-derafu-http-flow---detailed-explanation" href="http-flow.html#content-derafu-http-flow---detailed-explanation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Derafu HTTP: Flow - Detailed Explanation</h1>
+<p>The Derafu HTTP component implements a clean, modular approach to handling HTTP requests in PHP applications. The flow diagram illustrates how an HTTP request travels through the system, from the initial client request to the final response delivery.</p>
+<ul class="table-of-contents">
+<li><a href="http-flow.html#content-key-components">Key Components</a>
+<ul>
+<li><a href="http-flow.html#content-client">Client</a></li>
+<li><a href="http-flow.html#content-runtime">Runtime</a></li>
+<li><a href="http-flow.html#content-kernel">Kernel</a></li>
+<li><a href="http-flow.html#content-request-handler">Request Handler</a></li>
+<li><a href="http-flow.html#content-request">Request</a></li>
+<li><a href="http-flow.html#content-response">Response</a></li>
+<li><a href="http-flow.html#content-container">Container</a></li>
+</ul>
+</li>
+<li><a href="http-flow.html#content-the-http-requestresponse-flow">The HTTP Request/Response Flow</a></li>
+</ul>
+<p class="w-75 mx-auto"><img src="http://127.0.0.1:9000/img/derafu-http-flow.svg" alt="HTTP Flow" /></p>
+<h2><a id="content-key-components" href="http-flow.html#content-key-components" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Key Components</h2>
+<h3><a id="content-client" href="http-flow.html#content-client" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Client</h3>
+<p>The external entity (browser, API consumer, etc.) that initiates the HTTP request and receives the response.</p>
+<h3><a id="content-runtime" href="http-flow.html#content-runtime" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Runtime</h3>
+<p>The application’s entry point and execution environment. It serves as the orchestrator of the entire HTTP flow, responsible for:</p>
+<ul>
+<li>Bootstrapping the application.</li>
+<li>Creating the PSR-7 request object from the HTTP request.</li>
+<li>Initializing the kernel.</li>
+<li>Delegating request processing.</li>
+<li>Sending the response back to the client.</li>
+</ul>
+<h3><a id="content-kernel" href="http-flow.html#content-kernel" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Kernel</h3>
+<p>The core of the application, responsible for:</p>
+<ul>
+<li>Building and configuring the dependency injection container.</li>
+<li>Loading application configurations.</li>
+<li>Managing the application lifecycle.</li>
+<li>Coordinating the request handling process.</li>
+</ul>
+<p>The Kernel implements a micro-kernel architecture that keeps the core small and efficient while pushing most functionality to handlers and middleware.</p>
+<h3><a id="content-request-handler" href="http-flow.html#content-request-handler" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Request Handler</h3>
+<p>Processes the HTTP request and produces a response. Handlers:</p>
+<ul>
+<li>Receive the request from the kernel.</li>
+<li>Apply application logic.</li>
+<li>Generate an appropriate response.</li>
+<li>May use services from the container to fulfill the request.</li>
+</ul>
+<h3><a id="content-request" href="http-flow.html#content-request" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Request</h3>
+<p>A PSR-7 compliant ServerRequest object that represents the HTTP request. It encapsulates:</p>
+<ul>
+<li>HTTP method.</li>
+<li>URI and query parameters.</li>
+<li>Headers.</li>
+<li>Body content.</li>
+<li>Server and environment variables.</li>
+</ul>
+<h3><a id="content-response" href="http-flow.html#content-response" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Response</h3>
+<p>A PSR-7 compliant Response object that represents the HTTP response. It includes:</p>
+<ul>
+<li>Status code.</li>
+<li>Headers.</li>
+<li>Response body.</li>
+</ul>
+<h3><a id="content-container" href="http-flow.html#content-container" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Container</h3>
+<p>The dependency injection container that:</p>
+<ul>
+<li>Manages service instantiation and configuration.</li>
+<li>Provides service dependencies throughout the application.</li>
+<li>Implements the PSR-11 container interface.</li>
+<li>Supports autowiring for simplified service definition.</li>
+</ul>
+<h2><a id="content-the-http-requestresponse-flow" href="http-flow.html#content-the-http-requestresponse-flow" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>The HTTP Request/Response Flow</h2>
+<ol>
+<li>
+<p><strong>Client Sends HTTP Request</strong>
+The flow begins when a client makes an HTTP request to the application.</p>
+</li>
+<li>
+<p><strong>Runtime Creates Request Object</strong>
+The Runtime transforms the raw HTTP request into a PSR-7 compliant Request object, preparing it for processing.</p>
+</li>
+<li>
+<p><strong>Runtime Initializes Kernel</strong>
+The Kernel is initialized with the necessary configurations to process the current request.</p>
+</li>
+<li>
+<p><strong>Kernel Builds Container</strong>
+The Kernel builds and configures the dependency injection container, making all application services available.</p>
+</li>
+<li>
+<p><strong>Runtime Delegates Request Processing</strong>
+The Runtime passes the Request object to the Kernel for processing.</p>
+</li>
+<li>
+<p><strong>Kernel Delegates to Handler</strong>
+The Kernel identifies the appropriate Request Handler based on routing information and delegates the request processing.</p>
+</li>
+<li>
+<p><strong>Handler Generates Response</strong>
+The Handler applies business logic, interacts with the application services as needed, and generates a Response object.</p>
+</li>
+<li>
+<p><strong>Response Returned to Runtime</strong>
+The generated Response is returned through the call chain back to the Runtime.</p>
+</li>
+<li>
+<p><strong>Runtime Sends Response to Client</strong>
+The Runtime outputs the Response to the client, completing the HTTP cycle.</p>
+</li>
+</ol>
+</div>
+</div>
+                </main>
+                <div class="col-md-3 py-4">
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">Package Info</div>
+                                <span class="smal text-muted">
+                                    <a href="https://github.com/derafu/http" target="_blank" class="link-secondary text-decoration-none">
+                                        <i class="fa-brands fa-github"></i>
+                                        derafu/http
+                                    </a>
+                                </span>
+                                <div class="my-2">
+                                    <img src="https://img.shields.io/github/stars/derafu/http" alt="GitHub Repo stars">
+                                    <img src="https://img.shields.io/github/forks/derafu/http" alt="GitHub forks">
+                                </div>
+                            </div>
+                        </li>
+                        <a href="index.html" class="list-group-item list-group-item-action ">
+                            README
+                        </a>
+                    </div>
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                            <div class="fw-bold">Docs</div>
+                            <span class="smal text-muted">Guides & Examples</span>
+                            </div>
+                        </li>
+                        <a href="http-flow.html" class="list-group-item list-group-item-action active">
+                            HTTP Flow
+                        </a>
+                        <a href="design-principles.html" class="list-group-item list-group-item-action ">
+                            Design Principles
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+            <div id="footer-container"></div>
+<script src="https://derafu.org/foundation/js/derafu.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/show-language/prism-show-language.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.js"></script>
+    </body>
+</html>

@@ -41,14 +41,15 @@ jobs:
         uses: actions/setup-node@v3
 
       - name: Install Node.js dependencies
+        run: npm install
+
+      - name: Install D2
         run: |
-          npm install
-          npm install d2
+          curl -fsSL https://d2lang.com/install.sh | sh -s --
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Build with Vite
-        run: |
-          export PATH="$PATH:$PWD/node_modules/.bin"
-          npm run build
+        run: npm run build
 
       - name: Start PHP server
         run: php -d display_errors=1 -S 127.0.0.1:9000 public/index.php &

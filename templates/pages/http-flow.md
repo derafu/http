@@ -5,7 +5,7 @@ The Derafu HTTP component implements a clean, modular approach to handling HTTP 
 [TOC]
 
 {.w-75 .mx-auto}
-![HTTP Flow](../img/derafu-http-flow.svg)
+![HTTP Flow](/img/derafu-http-flow.svg)
 
 ## Key Components
 

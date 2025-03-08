@@ -41,10 +41,14 @@ jobs:
         uses: actions/setup-node@v3
 
       - name: Install Node.js dependencies
-        run: npm install && npm install -g d2
+        run: |
+          npm install
+          npm install d2
 
       - name: Build with Vite
-        run: npm run build
+        run: |
+          export PATH="$PATH:$PWD/node_modules/.bin"
+          npm run build
 
       - name: Start PHP server
         run: php -d display_errors=1 -S 127.0.0.1:9000 public/index.php &

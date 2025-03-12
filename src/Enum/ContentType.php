@@ -24,6 +24,7 @@ enum ContentType: string
 {
     // Application types.
     case JSON = 'application/json';
+    case YAML = 'application/yaml';
     case XML = 'application/xml';
     case FORM = 'application/x-www-form-urlencoded';
     case PDF = 'application/pdf';
@@ -134,6 +135,7 @@ enum ContentType: string
             $this->getMainType() === 'text'
             || in_array($this->value, [
                 self::JSON->value,
+                self::YAML->value,
                 self::XML->value,
                 self::JAVASCRIPT->value,
                 self::TYPESCRIPT->value,
@@ -217,6 +219,7 @@ enum ContentType: string
             'js' => self::JAVASCRIPT,
             'ts' => self::TYPESCRIPT,
             'json' => self::JSON,
+            'yaml', 'yml' => self::YAML,
             'xml' => self::XML,
             'html', 'htm' => self::HTML,
             'txt' => self::PLAIN,

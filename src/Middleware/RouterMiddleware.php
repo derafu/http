@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Http\Middleware;
 
 use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\ValueObject\RequestContext;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as PsrRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -23,6 +24,7 @@ use Psr\Http\Server\RequestHandlerInterface;
  *
  * This middleware is responsible for:
  *
+ *   - Creating a request context from the current request.
  *   - Matching the request path to a route.
  *   - Storing the matched route for downstream middlewares.
  *   - Handling routing errors through the problem handler.
@@ -52,6 +54,11 @@ class RouterMiddleware implements MiddlewareInterface
         PsrRequestInterface $request,
         RequestHandlerInterface $handler
     ): PsrResponseInterface {
+        // Create a request context from the current request and set it on the
+        // router.
+        $context = RequestContext::fromRequest($request);
+        $this->router->setContext($context);
+
         // Match route for the request path.
         $route = $this->router->match($request->getUri()->getPath());
 

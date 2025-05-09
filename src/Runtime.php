@@ -95,12 +95,12 @@ final class Runtime
         $context['APP_BASE_PATH'] = $context['APP_BASE_PATH'] ?? '';
 
         // Request information.
-        $context['URL_SCHEME'] = $context['HTTPS'] ? 'https' : 'http';
         $context['URL_HOST'] = $context['SERVER_NAME'] ?? 'localhost';
         $context['URL_PORT'] = $context['SERVER_PORT'] ?? 80;
         $context['URL_METHOD'] = $context['REQUEST_METHOD'] ?? 'GET';
         $context['URL_URI'] = $context['REQUEST_URI'] ?? '/';
         $context['URL_QUERY'] = $context['QUERY_STRING'] ?? '';
+        $context['URL_SCHEME'] = ($context['HTTPS'] ?? false || $context['SERVER_PORT'] == 443) ? 'https' : 'http';
 
         // Server information.
         $context['SCRIPT_NAME'] = $context['SCRIPT_NAME'] ?? '/index.php';

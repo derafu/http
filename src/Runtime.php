@@ -84,35 +84,42 @@ final class Runtime
      */
     public static function getApplicationContext(): array
     {
-        return [
-            // Application environment settings.
-            'APP_ENV' => $_SERVER['APP_ENV'] ?? 'dev',
-            'APP_DEBUG' => $_SERVER['APP_DEBUG'] ?? true,
+        // Merge server and environment variables.
+        $context = array_merge($_SERVER, $_ENV);
 
-            // Request information.
-            'REQUEST_URI' => $_SERVER['REQUEST_URI'] ?? '/',
-            'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'] ?? 'GET',
-            'QUERY_STRING' => $_SERVER['QUERY_STRING'] ?? '',
+        // Application environment settings.
+        $context['APP_ENV'] = $context['APP_ENV'] ?? 'dev';
+        $context['APP_DEBUG'] = $context['APP_DEBUG'] ?? true;
+        $context['APP_NAME'] = $context['APP_NAME'] ?? null;
+        $context['APP_URL'] = $context['APP_URL'] ?? null;
+        $context['APP_BASE_PATH'] = $context['APP_BASE_PATH'] ?? '';
 
-            // Server information.
-            'SCRIPT_NAME' => $_SERVER['SCRIPT_NAME'] ?? '/index.php',
-            'SERVER_NAME' => $_SERVER['SERVER_NAME'] ?? 'localhost',
-            'SERVER_PORT' => $_SERVER['SERVER_PORT'] ?? 80,
-            'HTTPS' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        // Request information.
+        $context['URL_SCHEME'] = $context['HTTPS'] ? 'https' : 'http';
+        $context['URL_HOST'] = $context['SERVER_NAME'] ?? 'localhost';
+        $context['URL_PORT'] = $context['SERVER_PORT'] ?? 80;
+        $context['URL_METHOD'] = $context['REQUEST_METHOD'] ?? 'GET';
+        $context['URL_URI'] = $context['REQUEST_URI'] ?? '/';
+        $context['URL_QUERY'] = $context['QUERY_STRING'] ?? '';
 
-            // Current timestamp.
-            'REQUEST_TIME' => $_SERVER['REQUEST_TIME'] ?? time(),
+        // Server information.
+        $context['SCRIPT_NAME'] = $context['SCRIPT_NAME'] ?? '/index.php';
 
-            // Client information.
-            'REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
+        // Current timestamp.
+        $context['REQUEST_TIME'] = $context['REQUEST_TIME'] ?? time();
 
-            // Headers.
-            'HTTP_HOST' => $_SERVER['HTTP_HOST'] ?? 'localhost',
-            'HTTP_USER_AGENT' => $_SERVER['HTTP_USER_AGENT'] ?? '',
-            'HTTP_ACCEPT' => $_SERVER['HTTP_ACCEPT'] ?? '*/*',
-            'HTTP_ACCEPT_LANGUAGE' => $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'en-US',
-            'HTTP_ACCEPT_ENCODING' => $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '',
-        ];
+        // Client information.
+        $context['REMOTE_ADDR'] = $context['REMOTE_ADDR'] ?? '127.0.0.1';
+
+        // Headers.
+        $context['HTTP_HOST'] = $context['HTTP_HOST'] ?? 'localhost';
+        $context['HTTP_USER_AGENT'] = $context['HTTP_USER_AGENT'] ?? '';
+        $context['HTTP_ACCEPT'] = $context['HTTP_ACCEPT'] ?? '*/*';
+        $context['HTTP_ACCEPT_LANGUAGE'] = $context['HTTP_ACCEPT_LANGUAGE'] ?? 'en-US';
+        $context['HTTP_ACCEPT_ENCODING'] = $context['HTTP_ACCEPT_ENCODING'] ?? '';
+
+        // Return the context.
+        return $context;
     }
 
     /**

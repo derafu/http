@@ -100,7 +100,7 @@ final class Runtime
         $context['URL_METHOD'] = $context['REQUEST_METHOD'] ?? 'GET';
         $context['URL_URI'] = $context['REQUEST_URI'] ?? '/';
         $context['URL_QUERY'] = $context['QUERY_STRING'] ?? '';
-        $context['URL_SCHEME'] = ($context['HTTPS'] ?? false || $context['SERVER_PORT'] == 443) ? 'https' : 'http';
+        $context['URL_SCHEME'] = (($context['HTTPS'] ?? false) || $context['SERVER_PORT'] == 443) ? 'https' : 'http';
 
         // Server information.
         $context['SCRIPT_NAME'] = $context['SCRIPT_NAME'] ?? '/index.php';

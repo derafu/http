@@ -17,6 +17,7 @@ use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as PsrRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 /**
  * Converts PSR-7 server requests into Derafu request objects.
@@ -24,6 +25,7 @@ use Psr\Http\Server\RequestHandlerInterface;
  * This middleware is responsible for:
  *
  *   - Converting PSR-7 ServerRequestInterface into Derafu's custom Request.
+ *   - Adding the request context to the request.
  *   - Pass the custom request as the request argument for downstream middlewares.
  *
  * This should be one of the first middlewares in the stack as other
@@ -32,10 +34,16 @@ use Psr\Http\Server\RequestHandlerInterface;
 class RequestFactoryMiddleware implements MiddlewareInterface
 {
     /**
+     * The attribute name used to store the request context.
+     */
+    public const CONTEXT_ATTRIBUTE = 'derafu.context';
+
+    /**
      * Creates a new request factory middleware.
      */
     public function __construct(
-        private readonly RequestFactoryInterface $requestFactory
+        private readonly RequestFactoryInterface $requestFactory,
+        private readonly ParameterBagInterface $parameterBag
     ) {
     }
 
@@ -50,8 +58,20 @@ class RequestFactoryMiddleware implements MiddlewareInterface
         PsrRequestInterface $request,
         RequestHandlerInterface $handler
     ): PsrResponseInterface {
+        // Add the request context to the request. This needs to be done before
+        // creating the custom request.
+        $context = $this->parameterBag->get('kernel.context');
+        if (!empty($context)) {
+            $request = $request->withAttribute(
+                self::CONTEXT_ATTRIBUTE,
+                $context
+            );
+        }
+
+        // Create the custom request.
         $customRequest = $this->requestFactory->createFromPsrRequest($request);
 
+        // Return the custom request.
         return $handler->handle($customRequest);
     }
 }

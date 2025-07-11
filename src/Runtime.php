@@ -43,8 +43,9 @@ final class Runtime
      *   4. Sends the response.
      *
      * @param RequestHandlerInterface $handler Handler returned in index.php
+     * @return int The status code of the execution.
      */
-    public static function run(RequestHandlerInterface $handler): void
+    public static function run(RequestHandlerInterface $handler): int
     {
         // Create PSR-17 factory for HTTP message objects.
         $psr17Factory = new Psr17Factory();
@@ -68,6 +69,9 @@ final class Runtime
 
         // Send the response.
         static::sendResponse($response);
+
+        // Return the status code of the execution.
+        return $response->getStatusCode() < 400 ? 0 : 1;
     }
 
     /**

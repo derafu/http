@@ -122,15 +122,6 @@ final class Runtime
         $context['HTTP_ACCEPT_LANGUAGE'] = $context['HTTP_ACCEPT_LANGUAGE'] ?? 'en-US';
         $context['HTTP_ACCEPT_ENCODING'] = $context['HTTP_ACCEPT_ENCODING'] ?? '';
 
-        // Replace % with %% in all values.
-        // This is necessary to avoid issues with the Symfony parser, avoiding
-        // the interpolation of the values with the % sign as parameters.
-        array_walk_recursive($context, function (&$value) {
-            if (is_string($value)) {
-                $value = str_replace('%', '%%', $value);
-            }
-        });
-
         // Return the context.
         return $context;
     }

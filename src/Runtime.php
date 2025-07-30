@@ -125,11 +125,11 @@ final class Runtime
         // Replace % with %% in all values.
         // This is necessary to avoid issues with the Symfony parser, avoiding
         // the interpolation of the values with the % sign as parameters.
-        foreach ($context as &$value) {
+        array_walk_recursive($context, function (&$value) {
             if (is_string($value)) {
                 $value = str_replace('%', '%%', $value);
             }
-        }
+        });
 
         // Return the context.
         return $context;

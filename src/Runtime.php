@@ -133,10 +133,8 @@ final class Runtime
      * @param Psr17Factory $factory
      * @return array Normalized array of UploadedFileInterface.
      */
-    private static function normalizeFiles(
-        array $files,
-        Psr17Factory $factory
-    ): array {
+    private static function normalizeFiles(array $files, Psr17Factory $factory): array
+    {
         $normalized = [];
 
         foreach ($files as $key => $value) {
@@ -146,16 +144,38 @@ final class Runtime
             }
 
             if (is_array($value) && isset($value['tmp_name'])) {
-                $normalized[$key] = $factory->createUploadedFile(
-                    $factory->createStreamFromFile($value['tmp_name']),
-                    $value['size'],
-                    $value['error'],
-                    $value['name'],
-                    $value['type']
-                );
+                // Normal or multiple.
+                if (is_array($value['tmp_name'])) {
+                    // Multiple files (input with [] or name[]).
+                    $normalized[$key] = [];
+                    foreach (array_keys($value['tmp_name']) as $idx) {
+                        if ($value['error'][$idx] === UPLOAD_ERR_OK && !empty($value['tmp_name'][$idx])) {
+                            $normalized[$key][$idx] = $factory->createUploadedFile(
+                                $factory->createStreamFromFile($value['tmp_name'][$idx]),
+                                $value['size'][$idx],
+                                $value['error'][$idx],
+                                $value['name'][$idx],
+                                $value['type'][$idx]
+                            );
+                        }
+                    }
+                } else {
+                    // Single file.
+                    if ($value['error'] === UPLOAD_ERR_OK && !empty($value['tmp_name'])) {
+                        $normalized[$key] = $factory->createUploadedFile(
+                            $factory->createStreamFromFile($value['tmp_name']),
+                            $value['size'],
+                            $value['error'],
+                            $value['name'],
+                            $value['type']
+                        );
+                    }
+                }
+
                 continue;
             }
 
+            // Recurse if there is no 'tmp_name' but there are more arrays (rare, very nested).
             if (is_array($value)) {
                 $normalized[$key] = static::normalizeFiles($value, $factory);
                 continue;

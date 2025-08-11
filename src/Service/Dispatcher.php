@@ -16,6 +16,7 @@ use Closure;
 use Derafu\Http\Contract\DispatcherInterface;
 use Derafu\Http\Contract\RequestInterface;
 use Derafu\Http\Exception\DispatcherException;
+use Derafu\Http\Response;
 use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Routing\Contract\RouteMatchInterface;
 use Invoker\InvokerInterface;
@@ -93,6 +94,16 @@ class Dispatcher implements DispatcherInterface
             // Handle controller::action strings.
             if (str_contains($handler, '::')) {
                 return $this->invoker->call($handler, $parameters);
+            }
+
+            // Handle redirect strings.
+            if (str_starts_with($handler, 'redirect:')) {
+                return new Response(
+                    status: 302,
+                    headers: [
+                        'Location' => substr($handler, 9),
+                    ],
+                );
             }
 
             // Error in the string handler.

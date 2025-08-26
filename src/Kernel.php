@@ -21,6 +21,7 @@ use Invoker\InvokerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -111,8 +112,10 @@ class Kernel extends MicroKernel implements KernelInterface
      *
      * @param ContainerConfigurator $configurator The container configurator.
      */
-    protected function configure(ContainerConfigurator $configurator): void
-    {
+    protected function configure(
+        ContainerConfigurator $configurator,
+        ContainerBuilder $container
+    ): void {
         $services = $configurator->services();
 
         // Register parameter bag service.

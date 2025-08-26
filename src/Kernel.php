@@ -111,6 +111,7 @@ class Kernel extends MicroKernel implements KernelInterface
      * This configuration happens before conatiner compilation.
      *
      * @param ContainerConfigurator $configurator The container configurator.
+     * @param ContainerBuilder $container The container builder.
      */
     protected function configure(
         ContainerConfigurator $configurator,

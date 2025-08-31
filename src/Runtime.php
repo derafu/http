@@ -53,7 +53,7 @@ final class Runtime
         // Extract headers from `$_SERVER`.
         $headers = [];
         foreach ($_SERVER as $key => $value) {
-            if (strpos($key, 'HTTP_') === 0) {
+            if (str_starts_with($key, 'HTTP_')) {
                 $headerName = str_replace('_', '-', strtolower(substr($key, 5)));
                 $headers[$headerName] = $value;
             }

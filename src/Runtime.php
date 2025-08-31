@@ -50,12 +50,35 @@ final class Runtime
         // Create PSR-17 factory for HTTP message objects.
         $psr17Factory = new Psr17Factory();
 
-        // Create PSR-7 server request using the factory
+        // Extract headers from `$_SERVER`.
+        $headers = [];
+        foreach ($_SERVER as $key => $value) {
+            if (strpos($key, 'HTTP_') === 0) {
+                $headerName = str_replace('_', '-', strtolower(substr($key, 5)));
+                $headers[$headerName] = $value;
+            }
+        }
+
+        // Read the request body.
+        $body = file_get_contents('php://input');
+
+        // Create PSR-7 server request using the factory.
         $request = $psr17Factory->createServerRequest(
             $_SERVER['REQUEST_METHOD'] ?? 'GET',
             $_SERVER['REQUEST_URI'] ?? '/',
             $_SERVER
         );
+
+        // Add headers manually since createServerRequest doesn't extract them
+        // from `$_SERVER`.
+        foreach ($headers as $name => $value) {
+            $request = $request->withHeader($name, $value);
+        }
+
+        // Set the body if it exists.
+        if (!empty($body)) {
+            $request = $request->withBody($psr17Factory->createStream($body));
+        }
 
         // Add query params and parsed body.
         $request = $request

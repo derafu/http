@@ -30,20 +30,18 @@ interface RequestInterface extends ServerRequestInterface
     /**
      * Gets a query parameter safely.
      *
-     * @template T
      * @param string $key The parameter name.
-     * @param T $default Value to return if parameter doesn't exist.
-     * @return T The parameter value or default.
+     * @param mixed $default Value to return if parameter doesn't exist.
+     * @return mixed The parameter value or default.
      */
     public function query(string $key, mixed $default = null): mixed;
 
     /**
      * Gets a post parameter safely.
      *
-     * @template T
      * @param string $key The parameter name.
-     * @param T $default Value to return if parameter doesn't exist.
-     * @return T The parameter value or default.
+     * @param mixed $default Value to return if parameter doesn't exist.
+     * @return mixed The parameter value or default.
      */
     public function post(string $key, mixed $default = null): mixed;
 
@@ -83,10 +81,9 @@ interface RequestInterface extends ServerRequestInterface
     /**
      * Gets input from any source (query, post, json).
      *
-     * @template T
      * @param string $key The parameter name.
-     * @param T $default Value to return if parameter doesn't exist.
-     * @return T The parameter value or default.
+     * @param mixed $default Value to return if parameter doesn't exist.
+     * @return mixed The parameter value or default.
      */
     public function input(string $key, mixed $default = null): mixed;
 

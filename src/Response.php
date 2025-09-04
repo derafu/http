@@ -15,7 +15,6 @@ namespace Derafu\Http;
 use Derafu\Http\Contract\ResponseInterface;
 use Derafu\Http\Enum\ContentType;
 use Derafu\Http\Enum\HttpStatus;
-use Derafu\Http\Exception\ResponseException;
 use Nyholm\Psr7\Response as NyholmResponse;
 use Nyholm\Psr7\Stream;
 use Psr\Http\Message\StreamInterface;

@@ -15,6 +15,7 @@ namespace Derafu\Http;
 use Derafu\Http\Contract\ResponseInterface;
 use Derafu\Http\Enum\ContentType;
 use Derafu\Http\Enum\HttpStatus;
+use Derafu\Http\Exception\ResponseException;
 use Nyholm\Psr7\Response as NyholmResponse;
 use Nyholm\Psr7\Stream;
 use Psr\Http\Message\StreamInterface;
@@ -103,7 +104,9 @@ class Response implements ResponseInterface
         mixed $data,
         int $flags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
     ): static {
-        return $this->asText(json_encode($data, $flags), ContentType::JSON);
+        $encodedData = json_encode($data, $flags | JSON_THROW_ON_ERROR);
+
+        return $this->asText($encodedData, ContentType::JSON);
     }
 
     /**

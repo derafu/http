@@ -16,6 +16,7 @@ use Derafu\Http\Contract\RequestInterface;
 use Derafu\Http\Contract\ResponseInterface;
 use Derafu\Http\Enum\ContentType;
 use Derafu\Http\Response;
+use JsonException;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as PsrRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -92,7 +93,11 @@ class ResponseNormalizerMiddleware implements MiddlewareInterface
         $newResponse = new Response();
 
         if ($format === ContentType::JSON) {
-            return $newResponse->asJson($response);
+            try {
+                return $newResponse->asJson($response);
+            } catch (JsonException $e) {
+                return $newResponse->asText($response, ContentType::PLAIN);
+            }
         }
 
         return $newResponse->asText($response, $format);

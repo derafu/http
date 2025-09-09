@@ -43,6 +43,11 @@ class ThrottleMiddleware implements MiddlewareInterface
         ServerRequestInterface $request,
         RequestHandlerInterface $handler
     ): ResponseInterface {
+        // Skip the throttle middleware if the request should not be processed.
+        if (!$this->shouldProcess($request)) {
+            return $handler->handle($request);
+        }
+
         // Consume the tokens needed for this request.
         $limit = $this->validateRequest($request);
 
@@ -60,6 +65,17 @@ class ThrottleMiddleware implements MiddlewareInterface
 
         // Return the response with the rate limiting headers.
         return $response;
+    }
+
+    /**
+     * Checks if the request should be processed.
+     *
+     * @param ServerRequestInterface $request The request.
+     * @return bool True if the request should be processed, false otherwise.
+     */
+    protected function shouldProcess(ServerRequestInterface $request): bool
+    {
+        return true;
     }
 
     /**

@@ -42,6 +42,7 @@ class ProblemDetail implements ProblemDetailInterface
      * @param RequestInterface $request
      * @param SafeThrowableInterface $throwable
      * @param array $context
+     * @param array $headers
      * @param string $timestamp
      * @param string $environment
      * @param boolean $debug
@@ -56,6 +57,7 @@ class ProblemDetail implements ProblemDetailInterface
         private readonly string $type = 'about:blank',
         private readonly ?string $title = null,
         private readonly array $context = [],
+        private readonly array $headers = [],
         private readonly bool $debug = true
     ) {
     }
@@ -139,6 +141,14 @@ class ProblemDetail implements ProblemDetailInterface
     /**
      * {@inheritDoc}
      */
+    public function getHeaders(): array
+    {
+        return $this->headers;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getTimestamp(): string
     {
         return $this->timestamp;
@@ -191,6 +201,14 @@ class ProblemDetail implements ProblemDetailInterface
             $output .= "```json\n" . json_encode($this->context, $flags) . "\n```\n\n";
         }
 
+        if (!empty($this->headers)) {
+            $output .= "## Headers\n\n";
+            foreach ($this->headers as $name => $value) {
+                $output .= "- {$name}: {$value}\n";
+            }
+            $output .= "\n";
+        }
+
         if ($this->isDebug()) {
             $output .= "## Throwable\n\n";
             $output .= "```\n" . $this->getThrowable() . "\n```\n\n";
@@ -215,6 +233,7 @@ class ProblemDetail implements ProblemDetailInterface
                 'environment' => $this->getEnvironment(),
                 'debug' => $this->isDebug(),
                 'context' => $this->getContext(),
+                'headers' => $this->getHeaders(),
                 'throwable' => $this->isDebug() ? $this->getThrowable() : null,
             ],
         ];

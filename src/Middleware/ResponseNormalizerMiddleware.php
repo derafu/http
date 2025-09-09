@@ -46,6 +46,9 @@ class ResponseNormalizerMiddleware implements MiddlewareInterface
         PsrRequestInterface $request,
         RequestHandlerInterface $handler
     ): PsrResponseInterface {
+        // Remove X-Powered-By header.
+        header_remove('X-Powered-By');
+
         // Get response from previous middleware.
         $response = $handler->handle($request);
 

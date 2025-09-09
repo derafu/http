@@ -38,7 +38,11 @@
         "ext-xdebug": "*",
         "friendsofphp/php-cs-fixer": "^3.63",
         "phpstan/phpstan": "^1.12",
-        "phpunit/phpunit": "^11.4"
+        "phpunit/phpunit": "^11.4",
+        "symfony/rate-limiter": "^7.3"
+    },
+    "suggest": {
+        "symfony/rate-limiter": "For rate limiting middleware."
     },
     "scripts": {
         "docs": "php tools/phpdocumentor run --config=phpdoc.xml",

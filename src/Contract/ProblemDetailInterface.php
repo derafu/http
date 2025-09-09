@@ -98,6 +98,13 @@ interface ProblemDetailInterface extends Stringable, JsonSerializable
     public function getContext(): array;
 
     /**
+     * Gets the additional headers.
+     *
+     * @return array
+     */
+    public function getHeaders(): array;
+
+    /**
      * Gets when the error occurred.
      *
      * @return string

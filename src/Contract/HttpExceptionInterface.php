@@ -47,4 +47,11 @@ interface HttpExceptionInterface extends TranslatableInterface
      * @return array
      */
     public function getContext(): array;
+
+    /**
+     * Additional headers to add to the response.
+     *
+     * @return array
+     */
+    public function getHeaders(): array;
 }

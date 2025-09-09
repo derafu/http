@@ -2,6 +2,14 @@
 
 declare(strict_types=1);
 
+/**
+ * Derafu: HTTP - Standard-Compliant HTTP Library with Extended Features.
+ *
+ * Copyright (c) 2025 Esteban De La Fuente Rubio / Derafu <https://www.derafu.dev>
+ * Licensed under the MIT License.
+ * See LICENSE file for more details.
+ */
+
 namespace Derafu\Http\Service;
 
 use Derafu\Http\Contract\DispatcherInterface;
@@ -52,12 +60,23 @@ class ProblemHandler implements ProblemHandlerInterface
         // Determine response format based on request.
         $format = $error->getRequest()->getPreferredFormat();
 
-        return match($format) {
+        // Render the error response.
+        $response = match($format) {
             'json' => $this->renderJsonError($error),
             'html' => $this->renderHtmlError($error),
             'markdown' => $this->renderMarkdownError($error),
             default => $this->renderHtmlError($error), // Fallback to HTML.
         };
+
+        // Add additional headers.
+        foreach ($error->getHeaders() as $name => $value) {
+            if ($value !== null) {
+                $response = $response->withHeader($name, $value);
+            }
+        }
+
+        // Return the response.
+        return $response;
     }
 
     /**

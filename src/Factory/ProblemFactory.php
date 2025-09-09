@@ -80,6 +80,11 @@ class ProblemFactory implements ProblemFactoryInterface
                 ? $throwable->getContext()
                 : [],
 
+            // Additional headers.
+            headers: $throwable instanceof HttpExceptionInterface
+                ? $throwable->getHeaders()
+                : [],
+
             // Environment info.
             timestamp: date('c'),
             environment: $this->params->get('kernel.environment'),

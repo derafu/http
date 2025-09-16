@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Http;
 
 use Derafu\Http\Contract\KernelInterface;
+use Derafu\Http\DependencyInjection\ControllerConfigurationCompilerPass;
 use Derafu\Http\Factory\InvokerFactory;
 use Derafu\Kernel\Config\Loader\PhpRoutesLoader;
 use Derafu\Kernel\Config\Loader\YamlRoutesLoader;
@@ -136,5 +137,10 @@ class Kernel extends MicroKernel implements KernelInterface
                 '$container' => new Reference('service_container'),
             ])
         ;
+
+        // Agregar compiler passes.
+        $container->addCompilerPass(
+            new ControllerConfigurationCompilerPass()
+        );
     }
 }

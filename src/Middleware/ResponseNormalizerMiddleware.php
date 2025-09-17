@@ -76,7 +76,7 @@ class ResponseNormalizerMiddleware implements MiddlewareInterface
      *
      * @param RequestInterface $request The incoming HTTP request.
      * @param mixed $response The response data to normalize.
-     * @return ResponseInterface
+     * @return PsrResponseInterface
      */
     protected function normalizeResponse(
         RequestInterface $request,

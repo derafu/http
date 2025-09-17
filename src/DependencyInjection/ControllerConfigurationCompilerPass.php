@@ -66,29 +66,36 @@ class ControllerConfigurationCompilerPass implements CompilerPassInterface
         ReflectionMethod $action,
         ContainerBuilder $container
     ): void {
-        $this->processRoute($action, $container);
+        $this->processRouteAttribute($action, $container);
     }
 
-    protected function processRoute(
+    protected function processRouteAttribute(
         ReflectionMethod $action,
         ContainerBuilder $container
     ): void {
-        // Load route attribute from action.
-        $routes = $action->getAttributes(Route::class);
-        if (empty($routes)) {
+        // Get routes from container.
+        $routes = $container->getParameter('routes');
+
+        // Load route attributes from action.
+        $routeAttributes = $action->getAttributes(Route::class);
+        if (empty($routeAttributes)) {
             return;
         }
-        $route = $routes[0]->newInstance();
-        assert($route instanceof Route);
 
-        // Add route to routes parameter.
-        $routes = $container->getParameter('routes');
-        $routes[$route->name] = [
-            'path' => $route->path,
-            'handler' => $action->class . '::' . $action->name,
-            'methods' => $route->methods,
-            'defaults' => $route->defaults,
-        ];
+        // Process route attributes.
+        foreach ($routeAttributes as $routeAttribute) {
+            $route = $routeAttribute->newInstance();
+            assert($route instanceof Route);
+
+            $routes[$route->name] = [
+                'path' => $route->path,
+                'handler' => $route->handler ?? ($action->class . '::' . $action->name),
+                'methods' => $route->methods,
+                'defaults' => $route->defaults,
+            ];
+        }
+
+        // Add routes to container.
         $container->setParameter('routes', $routes);
     }
 }

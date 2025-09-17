@@ -70,8 +70,9 @@ class ResponseNormalizerMiddleware implements MiddlewareInterface
      *
      *   1. Returns ResponseInterface instances unchanged (unless missing
      *      Content-Type).
-     *   2. Determines appropriate Content-Type if not specified.
-     *   3. Formats response data according to Content-Type.
+     *   2. Returns PsrResponseInterface instances unchanged.
+     *   3. Determines appropriate Content-Type if not specified.
+     *   4. Formats response data according to Content-Type.
      *
      * @param RequestInterface $request The incoming HTTP request.
      * @param mixed $response The response data to normalize.
@@ -80,7 +81,7 @@ class ResponseNormalizerMiddleware implements MiddlewareInterface
     protected function normalizeResponse(
         RequestInterface $request,
         mixed $response
-    ): ResponseInterface {
+    ): PsrResponseInterface {
         // If it is already an answer, just check/add Content-Type.
         if ($response instanceof ResponseInterface) {
             if (!$response->hasHeader('Content-Type')) {
@@ -88,6 +89,11 @@ class ResponseNormalizerMiddleware implements MiddlewareInterface
                     $request->getPreferredContentType()
                 );
             }
+            return $response;
+        }
+
+        // If it is already a PSR-7 response, just return it.
+        if ($response instanceof PsrResponseInterface) {
             return $response;
         }
 

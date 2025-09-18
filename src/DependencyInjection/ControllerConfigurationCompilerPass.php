@@ -92,6 +92,7 @@ class ControllerConfigurationCompilerPass implements CompilerPassInterface
                 'handler' => $route->handler ?? ($action->class . '::' . $action->name),
                 'methods' => $route->methods,
                 'defaults' => $route->defaults,
+                'roles' => $route->roles,
             ];
         }
 

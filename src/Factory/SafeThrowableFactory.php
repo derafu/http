@@ -38,10 +38,24 @@ class SafeThrowableFactory implements SafeThrowableFactoryInterface
      */
     public function create(Throwable $throwable): SafeThrowableInterface
     {
+        // Normalize the code and message.
+        // This is to handle the case where the code is not an integer,
+        // typically when it's a string. For example in PDOException.
+        $realCode = $throwable->getCode();
+        if (is_numeric($realCode)) {
+            $code = (int) $realCode;
+            $message = $throwable->getMessage();
+        } else {
+            $realCode = (string) $realCode;
+            $code = 0;
+            $message = $realCode . ' - ' . $throwable->getMessage();
+        }
+
+        // Create the safe throwable.
         return new SafeThrowable(
             class: get_class($throwable),
-            code: $throwable->getCode(),
-            message: $throwable->getMessage(),
+            code: $code,
+            message: $message,
             file: $this->obfuscatePath($throwable->getFile()),
             line: $throwable->getLine(),
             trace: array_map(function ($frame) {

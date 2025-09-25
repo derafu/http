@@ -14,8 +14,6 @@ namespace Derafu\Http\Middleware;
 
 use Derafu\Http\Contract\DispatcherInterface;
 use Derafu\Http\Contract\RequestInterface;
-use Derafu\Routing\Contract\RouteMatchInterface;
-use LogicException;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as PsrRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -58,16 +56,9 @@ class DispatcherMiddleware implements MiddlewareInterface
         PsrRequestInterface $request,
         RequestHandlerInterface $handler
     ): PsrResponseInterface {
-        // Get dependencies from previous middlewares.
-        $route = $request->getAttribute(RouterMiddleware::ROUTE_ATTRIBUTE);
-        if (!$route instanceof RouteMatchInterface) {
-            throw new LogicException(
-                'Route match not found. Ensure RouterMiddleware is executed first.'
-            );
-        }
-
         // Dispatch the request to its handler.
         assert($request instanceof RequestInterface);
+        $route = $request->route();
         $response = $this->dispatcher->dispatch($route, $request);
 
         // Store response and continue.

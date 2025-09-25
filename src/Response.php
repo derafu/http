@@ -15,19 +15,19 @@ namespace Derafu\Http;
 use Derafu\Http\Contract\ResponseInterface;
 use Derafu\Http\Enum\ContentType;
 use Derafu\Http\Enum\HttpStatus;
-use Nyholm\Psr7\Response as NyholmResponse;
+use Nyholm\Psr7\Response as PsrResponse;
 use Nyholm\Psr7\Stream;
 use Psr\Http\Message\StreamInterface;
 
 /**
  * Extended PSR-7 Response implementation.
  *
- * This class extends the Nyholm Response with additional functionality for
+ * This class extends the PSR-7 Response with additional functionality for
  * common response types and content handling.
  */
 class Response implements ResponseInterface
 {
-    private NyholmResponse $nyholmResponse;
+    private PsrResponse $psrResponse;
 
     /**
      * @param int $status Status code.
@@ -44,7 +44,7 @@ class Response implements ResponseInterface
         string $version = '1.1',
         ?string $reason = null
     ) {
-        $this->nyholmResponse = new NyholmResponse(
+        $this->psrResponse = new PsrResponse(
             $status,
             $headers,
             $body,
@@ -122,93 +122,121 @@ class Response implements ResponseInterface
         ;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getStatusCode(): int
     {
-        return $this->nyholmResponse->getStatusCode();
+        return $this->psrResponse->getStatusCode();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withStatus($code, $reasonPhrase = ''): static
     {
-        $this->nyholmResponse = $this->nyholmResponse->withStatus($code, $reasonPhrase);
+        $this->psrResponse = $this->psrResponse->withStatus($code, $reasonPhrase);
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getReasonPhrase(): string
     {
-        return $this->nyholmResponse->getReasonPhrase();
+        return $this->psrResponse->getReasonPhrase();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getProtocolVersion(): string
     {
-        return $this->nyholmResponse->getProtocolVersion();
+        return $this->psrResponse->getProtocolVersion();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withProtocolVersion($version): static
     {
-        $this->nyholmResponse = $this->nyholmResponse->withProtocolVersion($version);
+        $this->psrResponse = $this->psrResponse->withProtocolVersion($version);
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getHeaders(): array
     {
-        return $this->nyholmResponse->getHeaders();
+        return $this->psrResponse->getHeaders();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function hasHeader($name): bool
     {
-        return $this->nyholmResponse->hasHeader($name);
+        return $this->psrResponse->hasHeader($name);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getHeader($name): array
     {
-        return $this->nyholmResponse->getHeader($name);
+        return $this->psrResponse->getHeader($name);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getHeaderLine($name): string
     {
-        return $this->nyholmResponse->getHeaderLine($name);
+        return $this->psrResponse->getHeaderLine($name);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withHeader($name, $value): static
     {
-        $this->nyholmResponse = $this->nyholmResponse->withHeader($name, $value);
+        $this->psrResponse = $this->psrResponse->withHeader($name, $value);
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withAddedHeader($name, $value): static
     {
-        $this->nyholmResponse = $this->nyholmResponse->withAddedHeader($name, $value);
+        $this->psrResponse = $this->psrResponse->withAddedHeader($name, $value);
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withoutHeader($name): static
     {
-        $this->nyholmResponse = $this->nyholmResponse->withoutHeader($name);
+        $this->psrResponse = $this->psrResponse->withoutHeader($name);
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getBody(): StreamInterface
     {
-        return $this->nyholmResponse->getBody();
+        return $this->psrResponse->getBody();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withBody(StreamInterface $body): static
     {
-        $this->nyholmResponse = $this->nyholmResponse->withBody($body);
+        $this->psrResponse = $this->psrResponse->withBody($body);
         return $this;
     }
 }

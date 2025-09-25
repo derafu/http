@@ -14,8 +14,16 @@ namespace Derafu\Http;
 
 use Derafu\Http\Contract\RequestInterface;
 use Derafu\Http\Enum\ContentType;
+use Derafu\Http\Middleware\RouterMiddleware;
+use Derafu\Routing\Contract\RouteMatchInterface;
 use JsonException;
-use Nyholm\Psr7\ServerRequest as NyholmRequest;
+use LogicException;
+use Mezzio\Authentication\UserInterface;
+use Mezzio\Flash\FlashMessageMiddleware;
+use Mezzio\Flash\FlashMessagesInterface;
+use Mezzio\Session\SessionInterface;
+use Mezzio\Session\SessionMiddleware;
+use Nyholm\Psr7\ServerRequest as PsrRequest;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Message\UriInterface;
@@ -23,12 +31,12 @@ use Psr\Http\Message\UriInterface;
 /**
  * Extended PSR-7 ServerRequest implementation.
  *
- * This class extends the Nyholm ServerRequest with additional functionality for
+ * This class extends the PSR-7 ServerRequest with additional functionality for
  * content type negotiation and request type detection.
  */
 class Request implements RequestInterface
 {
-    private NyholmRequest $nyholmRequest;
+    private PsrRequest $psrRequest;
 
     /**
      * @param string $method HTTP method.
@@ -46,7 +54,7 @@ class Request implements RequestInterface
         string $version = '1.1',
         array $serverParams = []
     ) {
-        $this->nyholmRequest = new NyholmRequest(
+        $this->psrRequest = new PsrRequest(
             $method,
             $uri,
             $headers,
@@ -268,211 +276,327 @@ class Request implements RequestInterface
         return ContentType::HTML;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getServerParams(): array
     {
-        return $this->nyholmRequest->getServerParams();
+        return $this->psrRequest->getServerParams();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getCookieParams(): array
     {
-        return $this->nyholmRequest->getCookieParams();
+        return $this->psrRequest->getCookieParams();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withCookieParams(array $cookies): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withCookieParams($cookies);
+        $this->psrRequest = $this->psrRequest->withCookieParams($cookies);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getQueryParams(): array
     {
-        return $this->nyholmRequest->getQueryParams();
+        return $this->psrRequest->getQueryParams();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withQueryParams(array $query): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withQueryParams($query);
+        $this->psrRequest = $this->psrRequest->withQueryParams($query);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getUploadedFiles(): array
     {
-        return $this->nyholmRequest->getUploadedFiles();
+        return $this->psrRequest->getUploadedFiles();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withUploadedFiles(array $uploadedFiles): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withUploadedFiles($uploadedFiles);
+        $this->psrRequest = $this->psrRequest->withUploadedFiles($uploadedFiles);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getParsedBody()
     {
-        return $this->nyholmRequest->getParsedBody();
+        return $this->psrRequest->getParsedBody();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withParsedBody($data): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withParsedBody($data);
+        $this->psrRequest = $this->psrRequest->withParsedBody($data);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getAttributes(): array
     {
-        return $this->nyholmRequest->getAttributes();
+        return $this->psrRequest->getAttributes();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getAttribute($name, $default = null)
     {
-        return $this->nyholmRequest->getAttribute($name, $default);
+        return $this->psrRequest->getAttribute($name, $default);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withAttribute($name, $value): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withAttribute($name, $value);
+        $this->psrRequest = $this->psrRequest->withAttribute($name, $value);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withoutAttribute($name): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withoutAttribute($name);
+        $this->psrRequest = $this->psrRequest->withoutAttribute($name);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getRequestTarget(): string
     {
-        return $this->nyholmRequest->getRequestTarget();
+        return $this->psrRequest->getRequestTarget();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withRequestTarget($requestTarget): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withRequestTarget($requestTarget);
+        $this->psrRequest = $this->psrRequest->withRequestTarget($requestTarget);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getMethod(): string
     {
-        return $this->nyholmRequest->getMethod();
+        return $this->psrRequest->getMethod();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withMethod($method): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withMethod($method);
+        $this->psrRequest = $this->psrRequest->withMethod($method);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getUri(): UriInterface
     {
-        return $this->nyholmRequest->getUri();
+        return $this->psrRequest->getUri();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withUri($uri, $preserveHost = false): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withUri($uri, $preserveHost);
+        $this->psrRequest = $this->psrRequest->withUri($uri, $preserveHost);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getProtocolVersion(): string
     {
-        return $this->nyholmRequest->getProtocolVersion();
+        return $this->psrRequest->getProtocolVersion();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withProtocolVersion($version): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withProtocolVersion($version);
+        $this->psrRequest = $this->psrRequest->withProtocolVersion($version);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getHeaders(): array
     {
-        return $this->nyholmRequest->getHeaders();
+        return $this->psrRequest->getHeaders();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function hasHeader($name): bool
     {
-        return $this->nyholmRequest->hasHeader($name);
+        return $this->psrRequest->hasHeader($name);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getHeader($name): array
     {
-        return $this->nyholmRequest->getHeader($name);
+        return $this->psrRequest->getHeader($name);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getHeaderLine($name): string
     {
-        return $this->nyholmRequest->getHeaderLine($name);
+        return $this->psrRequest->getHeaderLine($name);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withHeader($name, $value): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withHeader($name, $value);
+        $this->psrRequest = $this->psrRequest->withHeader($name, $value);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withAddedHeader($name, $value): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withAddedHeader($name, $value);
+        $this->psrRequest = $this->psrRequest->withAddedHeader($name, $value);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withoutHeader($name): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withoutHeader($name);
+        $this->psrRequest = $this->psrRequest->withoutHeader($name);
 
         return $this;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function getBody(): StreamInterface
     {
-        return $this->nyholmRequest->getBody();
+        return $this->psrRequest->getBody();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function withBody(StreamInterface $body): static
     {
-        $this->nyholmRequest = $this->nyholmRequest->withBody($body);
+        $this->psrRequest = $this->psrRequest->withBody($body);
 
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function route(): RouteMatchInterface
+    {
+        $route = $this->psrRequest->getAttribute(RouterMiddleware::ROUTE_ATTRIBUTE);
+
+        if (!$route instanceof RouteMatchInterface) {
+            throw new LogicException(
+                'Route match not found. Ensure RouterMiddleware is executed before using the $request->route() method.'
+            );
+        }
+
+        return $route;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function session(): SessionInterface
+    {
+        $session = $this->psrRequest->getAttribute(
+            SessionMiddleware::SESSION_ATTRIBUTE
+        );
+
+        if (!$session instanceof SessionInterface) {
+            throw new LogicException('Session not found.');
+        }
+
+        return $session;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function flash(): FlashMessagesInterface
+    {
+        $flashMessages = $this->psrRequest->getAttribute(
+            FlashMessageMiddleware::FLASH_ATTRIBUTE
+        );
+
+        if (!$flashMessages instanceof FlashMessagesInterface) {
+            throw new LogicException('Flash messages not found.');
+        }
+
+        return $flashMessages;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function user(): ?UserInterface
+    {
+        return $this->psrRequest->getAttribute(UserInterface::class);
     }
 }

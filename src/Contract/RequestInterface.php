@@ -13,6 +13,10 @@ declare(strict_types=1);
 namespace Derafu\Http\Contract;
 
 use Derafu\Http\Enum\ContentType;
+use Derafu\Routing\Contract\RouteMatchInterface;
+use Mezzio\Authentication\UserInterface;
+use Mezzio\Flash\FlashMessagesInterface;
+use Mezzio\Session\SessionInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 
@@ -24,6 +28,9 @@ use Psr\Http\Message\UploadedFileInterface;
  *   - Content type negotiation.
  *   - Request type detection (API, XHR).
  *   - Common request patterns.
+ *   - Session management.
+ *   - Flash messages.
+ *   - User management.
  */
 interface RequestInterface extends ServerRequestInterface
 {
@@ -151,4 +158,35 @@ interface RequestInterface extends ServerRequestInterface
      * @return bool True if `X-Requested-With` header is `XMLHttpRequest`.
      */
     public function isXmlHttpRequest(): bool;
+
+    /**
+     * Gets the route match.
+     *
+     * @return RouteMatchInterface
+     * @throws LogicException If route match not found.
+     */
+    public function route(): RouteMatchInterface;
+
+    /**
+     * Gets the session.
+     *
+     * @return SessionInterface
+     * @throws LogicException If session not found.
+     */
+    public function session(): SessionInterface;
+
+    /**
+     * Gets the flash messages.
+     *
+     * @return FlashMessagesInterface
+     * @throws LogicException If flash messages not found.
+     */
+    public function flash(): FlashMessagesInterface;
+
+    /**
+     * Gets the user related to the request or null if not found.
+     *
+     * @return UserInterface|null
+     */
+    public function user(): ?UserInterface;
 }

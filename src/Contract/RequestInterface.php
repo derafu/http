@@ -14,6 +14,7 @@ namespace Derafu\Http\Contract;
 
 use Derafu\Http\Enum\ContentType;
 use Derafu\Routing\Contract\RouteMatchInterface;
+use LogicException;
 use Mezzio\Authentication\UserInterface;
 use Mezzio\Flash\FlashMessagesInterface;
 use Mezzio\Session\SessionInterface;

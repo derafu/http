@@ -33,16 +33,16 @@
         "psr/http-server-middleware": "^1.0",
         "php-di/invoker": "^2.3",
         "nyholm/psr7": "^1.8",
-        "mezzio/mezzio-session": "^1.16",
-        "mezzio/mezzio-flash": "^1.9",
-        "mezzio/mezzio-authentication": "^1.11"
+        "mezzio/mezzio-session": "^1.17",
+        "mezzio/mezzio-flash": "^1.10",
+        "mezzio/mezzio-authentication": "^1.13"
     },
     "require-dev": {
         "ext-xdebug": "*",
-        "friendsofphp/php-cs-fixer": "^3.63",
+        "friendsofphp/php-cs-fixer": "^3.94",
         "phpstan/phpstan": "^1.12",
-        "phpunit/phpunit": "^11.4",
-        "symfony/rate-limiter": "^7.3"
+        "phpunit/phpunit": "^11.5",
+        "symfony/rate-limiter": "^7.4"
     },
     "suggest": {
         "symfony/rate-limiter": "For rate limiting middleware."

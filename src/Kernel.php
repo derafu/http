@@ -61,10 +61,10 @@ class Kernel extends MicroKernel implements KernelInterface
      * @var array<string,string>
      */
     protected const CONFIG_FILES = [
-        'services.php' => 'php',
-        'routes.php' => 'routes',
         'services.yaml' => 'yaml',
+        'services.php' => 'php',
         'routes.yaml' => 'routes',
+        'routes.php' => 'routes',
     ];
 
     /**

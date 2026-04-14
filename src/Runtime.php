@@ -167,21 +167,11 @@ final class Runtime
             }
 
             if (is_array($value) && isset($value['tmp_name'])) {
-                // Normal or multiple.
                 if (is_array($value['tmp_name'])) {
-                    // Multiple files (input with [] or name[]).
-                    $normalized[$key] = [];
-                    foreach (array_keys($value['tmp_name']) as $idx) {
-                        if ($value['error'][$idx] === UPLOAD_ERR_OK && !empty($value['tmp_name'][$idx])) {
-                            $normalized[$key][$idx] = $factory->createUploadedFile(
-                                $factory->createStreamFromFile($value['tmp_name'][$idx]),
-                                $value['size'][$idx],
-                                $value['error'][$idx],
-                                $value['name'][$idx],
-                                $value['type'][$idx]
-                            );
-                        }
-                    }
+                    // Restructure PHP's flat $_FILES layout into a nested
+                    // tree grouped by index, then normalize recursively.
+                    $restructured = static::restructureNestedFiles($value);
+                    $normalized[$key] = static::normalizeFiles($restructured, $factory);
                 } else {
                     // Single file.
                     if ($value['error'] === UPLOAD_ERR_OK && !empty($value['tmp_name'])) {
@@ -198,7 +188,7 @@ final class Runtime
                 continue;
             }
 
-            // Recurse if there is no 'tmp_name' but there are more arrays (rare, very nested).
+            // Recurse if there is no 'tmp_name' but there are more arrays.
             if (is_array($value)) {
                 $normalized[$key] = static::normalizeFiles($value, $factory);
                 continue;
@@ -206,6 +196,58 @@ final class Runtime
         }
 
         return $normalized;
+    }
+
+    /**
+     * Restructures PHP's flat $_FILES array into a nested tree.
+     *
+     * PHP stores nested file uploads like name[0][caf] as:
+     *   ['tmp_name' => [0 => ['caf' => '...']], 'name' => [0 => ['caf' => '...']], ...]
+     *
+     * This method converts that into:
+     *   [0 => ['caf' => ['tmp_name' => '...', 'name' => '...', ...]]]
+     *
+     * So each leaf becomes a standard single-file array that normalizeFiles()
+     * can process.
+     *
+     * @param array $fileData A single entry from $_FILES with array tmp_name.
+     * @return array Restructured tree grouped by index/key.
+     */
+    private static function restructureNestedFiles(array $fileData): array
+    {
+        $result = [];
+        $keys = ['tmp_name', 'name', 'type', 'error', 'size'];
+
+        foreach ($fileData['tmp_name'] as $idx => $tmpName) {
+            if (is_array($tmpName)) {
+                // Nested: e.g. cafs[0][caf] → build sub-array per nested key.
+                $result[$idx] = [];
+                foreach ($tmpName as $nestedKey => $nestedTmpName) {
+                    if (is_array($nestedTmpName)) {
+                        // Even deeper nesting: recurse.
+                        $sub = [];
+                        foreach ($keys as $k) {
+                            $sub[$k] = $fileData[$k][$idx][$nestedKey];
+                        }
+                        $result[$idx][$nestedKey] = $sub;
+                    } else {
+                        // Leaf: single file at this level.
+                        $result[$idx][$nestedKey] = [];
+                        foreach ($keys as $k) {
+                            $result[$idx][$nestedKey][$k] = $fileData[$k][$idx][$nestedKey];
+                        }
+                    }
+                }
+            } else {
+                // Flat: e.g. cafs[0] → standard single-file structure.
+                $result[$idx] = [];
+                foreach ($keys as $k) {
+                    $result[$idx][$k] = $fileData[$k][$idx];
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**

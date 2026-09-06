@@ -85,7 +85,6 @@ class ControllerConfigurationCompilerPass implements CompilerPassInterface
         // Process route attributes.
         foreach ($routeAttributes as $routeAttribute) {
             $route = $routeAttribute->newInstance();
-            assert($route instanceof Route);
 
             $routes[$route->name] = [
                 'path' => $route->path,

@@ -15,12 +15,14 @@ namespace Derafu\Http\Middleware;
 use Derafu\Http\Contract\RequestInterface;
 use Derafu\Http\Contract\ResponseInterface;
 use Derafu\Http\Enum\ContentType;
+use Derafu\Http\Exception\ResponseSerializationException;
 use Derafu\Http\Response;
 use JsonException;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as PsrRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Stringable;
 
 /**
  * Normalizes responses to ensure PSR-7 compliance.
@@ -105,7 +107,15 @@ class ResponseNormalizerMiddleware implements MiddlewareInterface
             try {
                 return $newResponse->asJson($response);
             } catch (JsonException $e) {
-                return $newResponse->asText($response, ContentType::PLAIN);
+                if (is_string($response) || $response instanceof Stringable) {
+                    return $newResponse->asText((string) $response, ContentType::PLAIN);
+                }
+
+                throw new ResponseSerializationException([
+                    'Cannot fall back to plain text: response is of type {type}, not string (JSON encoding failed: {reason}).',
+                    'type' => get_debug_type($response),
+                    'reason' => $e->getMessage(),
+                ], previous: $e);
             }
         }
 

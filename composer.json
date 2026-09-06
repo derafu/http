@@ -25,6 +25,7 @@
         }
     },
     "require": {
+        "php": "^8.5",
         "derafu/kernel": "dev-main",
         "derafu/routing": "dev-main",
         "derafu/renderer": "dev-main",
@@ -39,10 +40,10 @@
     },
     "require-dev": {
         "ext-xdebug": "*",
-        "friendsofphp/php-cs-fixer": "^3.94",
-        "phpstan/phpstan": "^1.12",
-        "phpunit/phpunit": "^11.5",
-        "symfony/rate-limiter": "^8.0"
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.2",
+        "phpunit/phpunit": "^13.3",
+        "symfony/rate-limiter": "^8.1"
     },
     "suggest": {
         "symfony/rate-limiter": "For rate limiting middleware."

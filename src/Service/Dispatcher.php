@@ -107,10 +107,10 @@ class Dispatcher implements DispatcherInterface
             }
 
             // Error in the string handler.
-            throw new DispatcherException(sprintf(
-                'Handler of type string %s is invalid.',
-                $handler
-            ));
+            throw new DispatcherException([
+                'Handler of type string {handler} is invalid.',
+                'handler' => $handler,
+            ]);
         }
 
         // Handle closures.
@@ -119,9 +119,9 @@ class Dispatcher implements DispatcherInterface
         }
 
         // Handler type not supported.
-        throw new DispatcherException(sprintf(
-            'Unsupported handler type: %s.',
-            get_debug_type($handler)
-        ));
+        throw new DispatcherException([
+            'Unsupported handler type: {type}.',
+            'type' => get_debug_type($handler),
+        ]);
     }
 }

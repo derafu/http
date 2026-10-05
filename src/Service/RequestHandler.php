@@ -15,7 +15,7 @@ namespace Derafu\Http\Service;
 use Derafu\Http\Contract\ProblemFactoryInterface;
 use Derafu\Http\Contract\ProblemHandlerInterface;
 use Derafu\Http\Contract\RequestInterface;
-use LogicException;
+use Derafu\Translation\Exception\Core\TranslatableLogicException as LogicException;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as PsrRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;

@@ -51,14 +51,20 @@ class ResponseNormalizerMiddleware implements MiddlewareInterface
         // Remove X-Powered-By header.
         header_remove('X-Powered-By');
 
-        // Get response from previous middleware.
-        $response = $handler->handle($request);
-
-        // Get handler response if stored as attribute.
-        $handlerResponse = $request->getAttribute(
+        // Use the response stored by the dispatcher. It is checked by the key
+        // and not by its value because a handler can legitimately return null.
+        //
+        // The next handler is only asked for a response when none was stored.
+        // Asking it anyway would make the request handler (when this is the
+        // last middleware) throw on purpose and build a problem that is then
+        // discarded, on every successful request.
+        $attributes = $request->getAttributes();
+        $handlerResponse = array_key_exists(
             DispatcherMiddleware::RESPONSE_ATTRIBUTE,
-            $response
-        );
+            $attributes
+        )
+            ? $attributes[DispatcherMiddleware::RESPONSE_ATTRIBUTE]
+            : $handler->handle($request);
 
         // Normalize the response
         assert($request instanceof RequestInterface);

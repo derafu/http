@@ -15,12 +15,15 @@ namespace Derafu\TestsHttp\Middleware;
 use Derafu\Http\Contract\RequestInterface;
 use Derafu\Http\Enum\ContentType;
 use Derafu\Http\Exception\ResponseSerializationException;
+use Derafu\Http\Middleware\DispatcherMiddleware;
 use Derafu\Http\Middleware\ResponseNormalizerMiddleware;
 use Derafu\Http\Response;
+use Nyholm\Psr7\Response as NyholmResponse;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use ReflectionMethod;
 use Stringable;
 
@@ -31,7 +34,7 @@ use Stringable;
  * `JsonException` for `normalizeResponse()` to handle.
  */
 #[CoversClass(ResponseNormalizerMiddleware::class)]
-#[UsesClass(ResponseSerializationException::class), UsesClass(ContentType::class), UsesClass(Response::class)]
+#[UsesClass(ResponseSerializationException::class), UsesClass(ContentType::class), UsesClass(Response::class), UsesClass(DispatcherMiddleware::class)]
 class ResponseNormalizerMiddlewareTest extends TestCase
 {
     private const INVALID_UTF8 = "\xB1\x31";
@@ -114,5 +117,67 @@ class ResponseNormalizerMiddlewareTest extends TestCase
         } catch (ResponseSerializationException $e) {
             $this->assertInstanceOf(\JsonException::class, $e->getPrevious());
         }
+    }
+
+    /**
+     * The chain ends at this middleware, so asking the handler for a response
+     * would make the `RequestHandler` throw on purpose and build (and discard)
+     * a problem on every successful request.
+     */
+    public function testDoesNotCallTheHandlerWhenTheDispatcherAlreadyStoredTheResponse(): void
+    {
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->never())->method('handle');
+
+        $response = $this->process(
+            [DispatcherMiddleware::RESPONSE_ATTRIBUTE => ['status' => 'ok']],
+            $handler
+        );
+
+        $this->assertSame('{"status":"ok"}', (string) $response->getBody());
+    }
+
+    /**
+     * A handler may legitimately return `null`: that is still a response that
+     * was produced, not a missing one.
+     */
+    public function testTreatsANullStoredResponseAsAResponse(): void
+    {
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->never())->method('handle');
+
+        $response = $this->process(
+            [DispatcherMiddleware::RESPONSE_ATTRIBUTE => null],
+            $handler
+        );
+
+        $this->assertSame('null', (string) $response->getBody());
+    }
+
+    /**
+     * Without a stored response the middleware keeps working wherever it is
+     * placed in the chain: it uses what the next handler returns.
+     */
+    public function testUsesTheHandlerResponseWhenNothingWasStored(): void
+    {
+        $fromHandler = new NyholmResponse(202, [], 'from-handler');
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturn($fromHandler);
+
+        $response = $this->process([], $handler);
+
+        $this->assertSame($fromHandler, $response);
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    private function process(array $attributes, RequestHandlerInterface $handler): PsrResponseInterface
+    {
+        $request = $this->createStub(RequestInterface::class);
+        $request->method('getAttributes')->willReturn($attributes);
+        $request->method('getPreferredContentType')->willReturn(ContentType::JSON);
+
+        return (new ResponseNormalizerMiddleware())->process($request, $handler);
     }
 }

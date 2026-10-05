@@ -1,0 +1,49 @@
+# Optional wiring for apps using symfony/dependency-injection.
+# Import it from your own services.yaml:
+#
+#   imports:
+#       - { resource: '../vendor/derafu/http/resources/config/http-services.yaml' }
+#
+# It has what is the same in every app. What depends on the app stays in the
+# app: the list (and the order) of the middlewares that the request handler
+# runs (`Psr\Http\Server\RequestHandlerInterface`), the directory of the static
+# files (`StaticFilesMiddleware`) and the services of the other packages, like
+# the router.
+
+services:
+
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Derafu\Http\Middleware\RequestFactoryMiddleware: ~
+    Derafu\Http\Middleware\RouterMiddleware: ~
+    Derafu\Http\Middleware\DispatcherMiddleware: ~
+    Derafu\Http\Middleware\ResponseNormalizerMiddleware: ~
+
+    Derafu\Http\Contract\RequestFactoryInterface:
+        class: Derafu\Http\Factory\RequestFactory
+
+    Derafu\Http\Contract\DispatcherInterface:
+        class: Derafu\Http\Service\Dispatcher
+
+    Derafu\Http\Contract\ProblemHandlerInterface:
+        class: Derafu\Http\Service\ProblemHandler
+        lazy: true
+
+    Derafu\Http\Contract\ProblemFactoryInterface:
+        class: Derafu\Http\Factory\ProblemFactory
+        lazy: true
+
+    Derafu\Http\Contract\SafeThrowableFactoryInterface:
+        class: Derafu\Http\Factory\SafeThrowableFactory
+        lazy: true
+
+    # Feeds resources/translations into the consuming app's Translator (the
+    # app must pass $resourceProviders: !tagged_iterator
+    # derafu_translation.resource_provider to TranslatorFactory::create(),
+    # see derafu/translation's translation-services.yaml). The tag is
+    # explicit because _instanceof does not propagate across imported files.
+    Derafu\Http\Translation\HttpTranslationResourceProvider:
+        tags: ['derafu_translation.resource_provider']

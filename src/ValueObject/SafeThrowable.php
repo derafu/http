@@ -118,6 +118,14 @@ class SafeThrowable implements SafeThrowableInterface
 
     /**
      * {@inheritDoc}
+     *
+     * This is a technical dump of the throwable, like the `__toString()` of PHP
+     * itself, and it is only shown in debug mode.
+     *
+     * NOT TRANSLATED, ON PURPOSE: the labels of this text (`Class`, `Message`,
+     * `Stack trace`, `Caused by`...) are always in English. The translation lint
+     * can not see this text, because it is not a message of an exception: it is
+     * a decision and not an oversight.
      */
     public function __toString(): string
     {

@@ -42,11 +42,13 @@
         "ext-xdebug": "*",
         "friendsofphp/php-cs-fixer": "^3.95",
         "phpstan/phpstan": "^2.2",
-        "phpunit/phpunit": "^13.3",
-        "symfony/rate-limiter": "^8.1"
+        "phpunit/phpunit": "^13.4",
+        "symfony/rate-limiter": "^8.1",
+        "nikic/php-parser": "^5.9"
     },
     "suggest": {
-        "symfony/rate-limiter": "For rate limiting middleware."
+        "symfony/rate-limiter": "For rate limiting middleware.",
+        "nikic/php-parser": "Required by the tests of the messages of the package (Derafu\\Translation\\Lint reads the code)."
     },
     "scripts": {
         "docs": "php tools/phpdocumentor run --config=phpdoc.xml",

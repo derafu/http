@@ -72,14 +72,15 @@ class ProblemDetail implements ProblemDetailInterface
 
     /**
      * {@inheritDoc}
+     *
+     * The title is the one the problem was created with. With `about:blank`
+     * it should be the reason phrase of the HTTP status, which may be
+     * localized (RFC 9457, section 4.2.1): it is up to whoever creates the
+     * problem. Without a title, the reason phrase of the status is used.
      */
     public function getTitle(): string
     {
-        if ($this->type === 'about:blank' || $this->title === null) {
-            return $this->httpStatus->getReasonPhrase();
-        }
-
-        return $this->title;
+        return $this->title ?? $this->httpStatus->getReasonPhrase();
     }
 
     /**
@@ -172,6 +173,17 @@ class ProblemDetail implements ProblemDetailInterface
 
     /**
      * {@inheritDoc}
+     *
+     * This is the Markdown text that is given as the last resort, when the
+     * error can not be shown in any other format. It is a technical report for
+     * whoever has to solve the problem, not a message for the end user.
+     *
+     * NOT TRANSLATED, ON PURPOSE: the labels of this text (`Type`, `Title`,
+     * `Status`, `Environment`...) are always in English. This object has no
+     * translator, and the text is a technical dump. The `title` and the `detail`
+     * of the problem are already translated when it is created (see
+     * `ProblemFactory`). The translation lint can not see this text, because it
+     * is not a message of an exception: it is a decision and not an oversight.
      */
     public function __toString(): string
     {

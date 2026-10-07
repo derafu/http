@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsHttp\Translation;
 
 use Derafu\Http\Enum\HttpStatus;
+use Derafu\Http\Exception\BadRequestException;
 use Derafu\Http\Exception\TooManyRequestsException;
 use Derafu\Http\Translation\HttpTranslationResourceProvider;
 use Derafu\Translation\Lint\TranslationAudit;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  */
 #[CoversClass(HttpTranslationResourceProvider::class)]
 #[UsesClass(HttpStatus::class)]
+#[UsesClass(BadRequestException::class)]
 #[UsesClass(TooManyRequestsException::class)]
 final class HttpMessagesTest extends TestCase
 {
@@ -73,5 +75,13 @@ final class HttpMessagesTest extends TestCase
         $catalogue = TranslatorFactory::create('es', [], [new HttpTranslationResourceProvider()])->getCatalogue('es');
 
         $this->assertTrue($catalogue->has((new TooManyRequestsException())->getTitle(), 'errors'));
+        $this->assertTrue($catalogue->has((new BadRequestException())->getTitle(), 'errors'));
+    }
+
+    public function testTheDefaultMessageOfABadRequestHasATranslation(): void
+    {
+        $catalogue = TranslatorFactory::create('es', [], [new HttpTranslationResourceProvider()])->getCatalogue('es');
+
+        $this->assertSame('Solicitud incorrecta.', $catalogue->get((new BadRequestException())->getMessage(), 'errors'));
     }
 }

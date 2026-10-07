@@ -14,6 +14,7 @@ namespace Derafu\TestsHttp\Factory;
 
 use Derafu\Http\Contract\ProblemDetailInterface;
 use Derafu\Http\Enum\HttpStatus;
+use Derafu\Http\Exception\BadRequestException;
 use Derafu\Http\Exception\TooManyRequestsException;
 use Derafu\Http\Factory\ProblemFactory;
 use Derafu\Http\Factory\SafeThrowableFactory;
@@ -46,6 +47,7 @@ use TypeError;
 #[UsesClass(ProblemDetail::class)]
 #[UsesClass(SafeThrowable::class)]
 #[UsesClass(HttpStatus::class)]
+#[UsesClass(BadRequestException::class)]
 #[UsesClass(TooManyRequestsException::class)]
 final class ProblemFactoryTest extends TestCase
 {
@@ -150,6 +152,15 @@ final class ProblemFactoryTest extends TestCase
             'Demasiadas solicitudes',
             $this->title(new TooManyRequestsException(), $this->translator())
         );
+    }
+
+    public function testABadRequestIsAProblemOf400(): void
+    {
+        $problem = $this->problem(new BadRequestException('Image is required.'), $this->translator());
+
+        $this->assertSame(HttpStatus::BAD_REQUEST, $problem->getHttpStatus());
+        $this->assertSame('Bad Request', $problem->getTitle());
+        $this->assertSame('Image is required.', $problem->getDetail());
     }
 
     public function testATitleWithoutTranslationKeepsTheOriginal(): void

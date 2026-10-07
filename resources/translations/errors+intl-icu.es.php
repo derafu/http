@@ -54,6 +54,8 @@ return [
     'Unknown Error' => 'Error desconocido',
 
     // Messages of the exceptions.
+    'Bad request.' =>
+        'Solicitud incorrecta.',
     'Too many requests.' =>
         'Demasiadas solicitudes.',
     'Route match not found. Ensure RouterMiddleware is executed before using the $request->route() method.' =>

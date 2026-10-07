@@ -28,7 +28,7 @@ use Throwable;
  * This class is responsible for:
  *
  *   - Maintaining the middleware queue.
- *   - Processing middlewares in order.
+ *   - Processing middlewares in order, for any number of requests.
  *   - Generating a error when no middlewares remain.
  */
 class RequestHandler implements RequestHandlerInterface
@@ -39,7 +39,11 @@ class RequestHandler implements RequestHandlerInterface
     private array $middlewares = [];
 
     /**
-     * Current position in middleware stack.
+     * Position of the middleware that this handler runs.
+     *
+     * A handler never changes its position: the one of the container always
+     * starts the chain, and each middleware receives a copy at the next
+     * position, so the same handler can attend any number of requests.
      *
      * @var int
      */
@@ -74,12 +78,13 @@ class RequestHandler implements RequestHandlerInterface
                 );
             }
 
-            // Get next middleware and increment position.
+            // The middleware gets a handler for the rest of the chain.
             $middleware = $this->middlewares[$this->currentIndex];
-            $this->currentIndex++;
+            $next = clone $this;
+            $next->currentIndex = $this->currentIndex + 1;
 
             // Process the middleware.
-            return $middleware->process($request, $this);
+            return $middleware->process($request, $next);
         } catch (Throwable $e) {
             assert($request instanceof RequestInterface);
             $problem = $this->problemFactory->create($e, $request);

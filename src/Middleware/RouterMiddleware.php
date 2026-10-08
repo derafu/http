@@ -13,7 +13,9 @@ declare(strict_types=1);
 namespace Derafu\Http\Middleware;
 
 use Derafu\Routing\Contract\RouterInterface;
+use Derafu\Routing\Exception\InvalidPathException;
 use Derafu\Routing\ValueObject\RequestContext;
+use Derafu\Support\Url;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as PsrRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -24,6 +26,14 @@ use Psr\Http\Server\RequestHandlerInterface;
  *
  * This middleware is responsible for:
  *
+ *   - Giving the request the canonical form of its path (see
+ *     `Derafu\Support\Url::normalizePath()`): `/api//index`, `/api/./index` and
+ *     `/api/%69ndex` are `/api/index`. Every middleware after this one, and the
+ *     handler of the route, sees that path, so a rule that decides by the text
+ *     of the path (the protected paths of `derafu/auth`) and the one that
+ *     reads its meaning (the route) are about the same path. A path that has
+ *     no safe form (it climbs a directory, it has an escaped separator, a
+ *     control character...) is refused with an `InvalidPathException` (a 400).
  *   - Creating a request context from the current request.
  *   - Matching the request path to a route.
  *   - Storing the matched route for downstream middlewares.
@@ -54,13 +64,21 @@ class RouterMiddleware implements MiddlewareInterface
         PsrRequestInterface $request,
         RequestHandlerInterface $handler
     ): PsrResponseInterface {
+        // The path that everything after this middleware sees is the canonical
+        // one. A path that has no safe form is not served.
+        $path = $request->getUri()->getPath();
+        $canonical = Url::normalizePath($path) ?? throw new InvalidPathException($path);
+        if ($canonical !== $path) {
+            $request = $request->withUri($request->getUri()->withPath($canonical));
+        }
+
         // Create a request context from the current request and set it on the
         // router.
         $context = RequestContext::fromRequest($request);
         $this->router->setContext($context);
 
         // Match route for the request path.
-        $route = $this->router->match($request->getUri()->getPath());
+        $route = $this->router->match($canonical);
 
         // Store route and continue.
         return $handler->handle(

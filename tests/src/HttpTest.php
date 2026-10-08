@@ -34,6 +34,7 @@ use Invoker\Invoker;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
@@ -62,11 +63,16 @@ class HttpTest extends TestCase
      * A new `RequestHandler` is built for each request on purpose: it keeps a
      * mutable position in the chain, so it cannot be reused.
      */
-    private function send(string $path, string $method = 'GET'): PsrResponseInterface
-    {
+    private function send(
+        string $path,
+        string $method = 'GET',
+        array $pages = [],
+        string $accept = 'application/json',
+        bool $debug = false
+    ): PsrResponseInterface {
         $params = new ParameterBag([
             'kernel.environment' => 'test',
-            'kernel.debug' => false,
+            'kernel.debug' => $debug,
             'kernel.context' => [],
             'kernel.project_dir' => sys_get_temp_dir(),
         ]);
@@ -91,6 +97,12 @@ class HttpTest extends TestCase
                     );
                 },
             ],
+            'broken_page' => [
+                'path' => '/broken-page',
+                'handler' => function () {
+                    throw new RuntimeException('Something broke in a page.');
+                },
+            ],
             'broken' => [
                 'path' => '/api/broken',
                 'handler' => function () {
@@ -99,13 +111,19 @@ class HttpTest extends TestCase
             ],
         ]);
 
-        $dispatcher = new Dispatcher(
-            new Invoker(),
-            $this->createStub(RendererInterface::class)
+        // The renderer says which template it was given and what for.
+        $renderer = $this->createStub(RendererInterface::class);
+        $renderer->method('render')->willReturnCallback(
+            fn (string $file, array $parameters): string => sprintf(
+                'PAGE %s %d',
+                basename($file),
+                $parameters['context']['error']->getStatus()
+            )
         );
+        $dispatcher = new Dispatcher(new Invoker(null, $this->controllers()), $renderer);
 
         $this->problemHandlerCalls = 0;
-        $problemHandler = new class (new ProblemHandler($router, $dispatcher), $this->problemHandlerCalls) implements ProblemHandlerInterface {
+        $problemHandler = new class (new ProblemHandler($dispatcher, $pages), $this->problemHandlerCalls) implements ProblemHandlerInterface {
             public function __construct(
                 private readonly ProblemHandlerInterface $handler,
                 private int &$calls
@@ -132,7 +150,7 @@ class HttpTest extends TestCase
         $request = new ServerRequest(
             $method,
             'http://localhost' . $path,
-            ['Accept' => 'application/json'],
+            ['Accept' => $accept],
             null,
             '1.1',
             [
@@ -144,6 +162,49 @@ class HttpTest extends TestCase
         );
 
         return $handler->handle($request);
+    }
+
+    /**
+     * A template that exists, because the dispatcher renders only files.
+     */
+    private function template(string $name): string
+    {
+        $file = sys_get_temp_dir() . '/derafu-http-' . getmypid() . '-' . $name;
+        file_put_contents($file, '');
+        $this->templates[] = $file;
+
+        return $file;
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->templates as $file) {
+            @unlink($file);
+        }
+        $this->templates = [];
+    }
+
+    /**
+     * @var list<string>
+     */
+    private array $templates = [];
+
+    /**
+     * The container that gives the controllers, as the one of an application.
+     */
+    private function controllers(): ContainerInterface
+    {
+        return new class () implements ContainerInterface {
+            public function get(string $id): object
+            {
+                return new $id();
+            }
+
+            public function has(string $id): bool
+            {
+                return class_exists($id);
+            }
+        };
     }
 
     private function json(PsrResponseInterface $response): array
@@ -229,5 +290,117 @@ class HttpTest extends TestCase
             $this->problemHandlerCalls,
             'The problem handler must not run when the request succeeds.'
         );
+    }
+
+    // -------------------------------------------------------------------------
+    // The pages of the errors in HTML.
+    // -------------------------------------------------------------------------
+
+    private const HTML = 'text/html,application/xhtml+xml';
+
+    public function testTheErrorPageOfTheStatusIsRenderedWithTheStatusOfTheError(): void
+    {
+        $pages = [404 => $this->template('error404.html.twig'), 'default' => $this->template('error.html.twig')];
+
+        $response = $this->send('/page', pages: $pages, accept: self::HTML);
+
+        $this->assertSame(404, $response->getStatusCode());
+        $this->assertStringStartsWith('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertSame('PAGE ' . basename($pages[404]) . ' 404', (string) $response->getBody());
+    }
+
+    public function testTheDefaultErrorPageIsUsedForAStatusThatHasNone(): void
+    {
+        $pages = [404 => $this->template('error404.html.twig'), 'default' => $this->template('error.html.twig')];
+
+        $response = $this->send('/broken-page', pages: $pages, accept: self::HTML);
+
+        $this->assertSame(500, $response->getStatusCode());
+        $this->assertSame('PAGE ' . basename($pages['default']) . ' 500', (string) $response->getBody());
+    }
+
+    public function testTheErrorPagesAreNotRoutes(): void
+    {
+        $pages = ['default' => $this->template('error.html.twig')];
+
+        // Nobody can ask for the page: it is a path like any other that does not
+        // exist, and it is answered with the page of its own error.
+        foreach (['/error', '/error404', '/error.html.twig'] as $path) {
+            $response = $this->send($path, pages: $pages, accept: self::HTML);
+
+            $this->assertSame(404, $response->getStatusCode(), $path);
+            $this->assertSame('PAGE ' . basename($pages['default']) . ' 404', (string) $response->getBody(), $path);
+        }
+    }
+
+    public function testAControllerCanBeTheErrorPage(): void
+    {
+        $pages = ['default' => ErrorController::class . '::show'];
+
+        $response = $this->send('/page', pages: $pages, accept: self::HTML);
+
+        $this->assertSame(404, $response->getStatusCode());
+        $this->assertSame('CONTROLLER 404', (string) $response->getBody());
+    }
+
+    public function testAPageThatDoesNotWorkLeavesTheDefaultOne(): void
+    {
+        $pages = [404 => 'this-is-not-a-handler', 'default' => $this->template('error.html.twig')];
+
+        $response = $this->send('/page', pages: $pages, accept: self::HTML);
+
+        $this->assertSame(404, $response->getStatusCode());
+        $this->assertSame('PAGE ' . basename($pages['default']) . ' 404', (string) $response->getBody());
+    }
+
+    public function testWithoutPagesTheErrorIsMarkdownWithoutAnyReasonThatPagesFailed(): void
+    {
+        $response = $this->send('/page', accept: self::HTML, debug: true);
+
+        $this->assertSame(404, $response->getStatusCode());
+        $this->assertStringStartsWith('text/markdown', $response->getHeaderLine('Content-Type'));
+        $this->assertStringStartsWith('# An Error Occurred', (string) $response->getBody());
+        $this->assertStringNotContainsString('Error pages that failed', (string) $response->getBody());
+    }
+
+    public function testWhenThePagesFailTheMarkdownSaysWhyOnlyInDebug(): void
+    {
+        $pages = [404 => 'broken-404', 'default' => 'broken-default'];
+
+        $debug = (string) $this->send('/page', pages: $pages, accept: self::HTML, debug: true)->getBody();
+        $this->assertStringContainsString('## Error pages that failed', $debug);
+        $this->assertStringContainsString('- `404`: Derafu\Http\Exception\DispatcherException', $debug);
+        $this->assertStringContainsString('- `default`: Derafu\Http\Exception\DispatcherException', $debug);
+        $this->assertStringContainsString('broken-default', $debug);
+
+        $response = $this->send('/page', pages: $pages, accept: self::HTML);
+        $this->assertSame(404, $response->getStatusCode());
+        $this->assertStringStartsWith('# An Error Occurred', (string) $response->getBody());
+        $this->assertStringNotContainsString('Error pages that failed', (string) $response->getBody());
+        $this->assertStringNotContainsString('broken-default', (string) $response->getBody());
+    }
+
+    public function testJsonDoesNotUseThePages(): void
+    {
+        $pages = ['default' => $this->template('error.html.twig')];
+
+        $response = $this->send('/page', pages: $pages);
+
+        $this->assertSame(404, $response->getStatusCode());
+        $this->assertSame(404, $this->json($response)['status']);
+    }
+}
+
+/**
+ * An error page that is a controller: the problem is in the context.
+ */
+final class ErrorController
+{
+    /**
+     * @param array{error: ProblemDetailInterface} $context
+     */
+    public function show(array $context): string
+    {
+        return 'CONTROLLER ' . $context['error']->getStatus();
     }
 }

@@ -15,6 +15,12 @@
 # HTTP_CLIENT_NETWORK_IPV4_PREFIX and HTTP_CLIENT_NETWORK_IPV6_PREFIX.
 
 parameters:
+    # The pages of the errors in HTML (see ProblemHandler): the handler of each
+    # status (404, 500...) and `default`, for the statuses that have none. A
+    # handler is the path of a template or a `Controller::action`; the problem
+    # is passed to it as `context.error`. Without pages the errors in HTML are
+    # sent as Markdown. They are not routes: a page of an error is not a URL.
+    http.error_pages: []
     # Who the client of a request is (see ClientIpMiddleware). The proxies that
     # the application trusts, separated by commas: addresses, ranges (CIDR) and
     # the shortcuts `loopback`, `private` and `link-local`. By default there are
@@ -55,6 +61,8 @@ services:
     Derafu\Http\Contract\ProblemHandlerInterface:
         class: Derafu\Http\Service\ProblemHandler
         lazy: true
+        arguments:
+            $pages: '%http.error_pages%'
 
     Derafu\Http\Contract\ProblemFactoryInterface:
         class: Derafu\Http\Factory\ProblemFactory

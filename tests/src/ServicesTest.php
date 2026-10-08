@@ -12,7 +12,10 @@ declare(strict_types=1);
 
 namespace Derafu\TestsHttp;
 
+use Derafu\Http\Contract\DispatcherInterface;
+use Derafu\Http\Contract\ProblemHandlerInterface;
 use Derafu\Http\Middleware\ClientIpMiddleware;
+use Derafu\Http\Service\ProblemHandler;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
 use Nyholm\Psr7\Response;
 use Nyholm\Psr7\ServerRequest;
@@ -164,5 +167,56 @@ final class ServicesTest extends TestCase
         $this->expectException(TranslatableInvalidArgumentException::class);
 
         $this->middleware();
+    }
+
+    /**
+     * The error pages that the handler of the problems got from the container.
+     *
+     * @param array<int|string, string>|null $pages The parameter of the
+     * application, or null for the one of the package.
+     * @return array<int|string, mixed>
+     */
+    private function errorPages(?array $pages = null): array
+    {
+        $container = new ContainerBuilder();
+        (new YamlFileLoader($container, new FileLocator(dirname(__DIR__, 2) . '/resources/config')))
+            ->load('http-services.yaml');
+        if ($pages !== null) {
+            $container->setParameter('http.error_pages', $pages);
+        }
+
+        // Only this service, with the dispatcher that the application gives.
+        foreach (array_keys($container->getDefinitions()) as $id) {
+            if ($id !== ProblemHandlerInterface::class && $id !== 'service_container') {
+                $container->removeDefinition($id);
+            }
+        }
+        $container->register(DispatcherInterface::class)->setSynthetic(true)->setPublic(true);
+        $container->getDefinition(ProblemHandlerInterface::class)->setPublic(true)->setLazy(false);
+        $container->compile(true);
+        $container->set(DispatcherInterface::class, $this->createStub(DispatcherInterface::class));
+
+        $handler = $container->get(ProblemHandlerInterface::class);
+        $this->assertInstanceOf(ProblemHandler::class, $handler);
+
+        $property = new \ReflectionProperty(ProblemHandler::class, 'pages');
+        $value = $property->getValue($handler);
+        $this->assertIsArray($value);
+
+        return $value;
+    }
+
+    #[Test]
+    public function shouldHaveNoErrorPagesByDefault(): void
+    {
+        $this->assertSame([], $this->errorPages());
+    }
+
+    #[Test]
+    public function shouldGiveTheErrorPagesOfTheApplicationToTheHandler(): void
+    {
+        $pages = [404 => '/templates/error404.html.twig', 'default' => '/templates/error.html.twig'];
+
+        $this->assertSame($pages, $this->errorPages($pages));
     }
 }

@@ -76,4 +76,10 @@ return [
         'El nombre de encabezado "{header}" no es válido.',
     'Cannot fall back to plain text: response is of type {type}, not string (JSON encoding failed: {reason}).' =>
         'No se puede usar texto plano como alternativa: la respuesta es de tipo {type}, no string (falló la codificación JSON: {reason}).',
+
+    // Error pages.
+    'The key of the error page "{key}" is not valid: it must be a status from 400 to 599 or "{default}".' =>
+        'La clave de la página de error "{key}" no es válida: debe ser un estado de 400 a 599 o "{default}".',
+    'The handler of the error page "{key}" is not valid: it must be a text that is not empty or a Closure.' =>
+        'El manejador de la página de error "{key}" no es válido: debe ser un texto que no esté vacío o un Closure.',
 ];

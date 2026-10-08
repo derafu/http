@@ -62,10 +62,12 @@ use Psr\Http\Server\RequestHandlerInterface;
  *
  *   - `client_ip`: the address of the client, normalized (see `Ip::normalize()`),
  *     or `unknown` if the connection has none.
- *   - `client_network`: the network of the client (the address with the bits of
- *     its host set to zero). It is what a limit should count by: a client of
- *     IPv6 has a whole `/64` (or more) and changing its address within it costs
- *     nothing. By default it is the address for IPv4 and the `/64` for IPv6.
+ *   - `client_network`: the network of the client, in CIDR notation: the address
+ *     with the bits of its host set to zero, and the prefix (`203.0.113.77/32`,
+ *     `2001:db8:1:2::/64`). It is what a limit should count by: a client of IPv6
+ *     has a whole `/64` (or more) and changing its address within it costs
+ *     nothing. By default it is the `/32` for IPv4 (the address, a network of
+ *     one) and the `/64` for IPv6. It is `unknown` if the connection has none.
  *
  * Whoever reads them without this middleware in the pipeline can use `ipOf()`
  * and `networkOf()`, which give the address of the connection.
@@ -152,7 +154,7 @@ class ClientIpMiddleware implements MiddlewareInterface
         $ip = $this->resolve($request);
         $network = $ip === self::UNKNOWN
             ? self::UNKNOWN
-            : (string) Ip::network($ip, $this->ipv4Prefix, $this->ipv6Prefix)
+            : (string) Ip::cidr($ip, $this->ipv4Prefix, $this->ipv6Prefix)
         ;
 
         return $handler->handle(
@@ -183,15 +185,15 @@ class ClientIpMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Gets the network of the client of a request: what to count by when a limit
-     * is applied to the client.
+     * Gets the network of the client of a request, in CIDR notation: what to
+     * count by when a limit is applied to the client.
      *
      * It is the attribute that this middleware leaves. If the middleware is not
      * in the pipeline, it is the network of the address of the connection, with
-     * the defaults (the address for IPv4, the `/64` for IPv6).
+     * the defaults (the `/32` for IPv4, the `/64` for IPv6).
      *
      * @param ServerRequestInterface $request The request.
-     * @return string The network, or `unknown`.
+     * @return string The network (`203.0.113.77/32`), or `unknown`.
      */
     public static function networkOf(ServerRequestInterface $request): string
     {
@@ -202,7 +204,7 @@ class ClientIpMiddleware implements MiddlewareInterface
 
         $ip = self::ipOf($request);
 
-        return $ip === self::UNKNOWN ? self::UNKNOWN : (string) Ip::network($ip);
+        return $ip === self::UNKNOWN ? self::UNKNOWN : (string) Ip::cidr($ip);
     }
 
     /**

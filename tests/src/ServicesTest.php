@@ -105,11 +105,11 @@ final class ServicesTest extends TestCase
         $middleware = $this->middleware();
 
         $this->assertSame(
-            ['10.0.0.1', '10.0.0.1'],
+            ['10.0.0.1', '10.0.0.1/32'],
             $this->client($middleware, '10.0.0.1', ['X-Forwarded-For' => '203.0.113.9'])
         );
         $this->assertSame(
-            ['2001:db8:1:2:3:4:5:6', '2001:db8:1:2::'],
+            ['2001:db8:1:2:3:4:5:6', '2001:db8:1:2::/64'],
             $this->client($middleware, '2001:db8:1:2:3:4:5:6')
         );
     }
@@ -152,8 +152,8 @@ final class ServicesTest extends TestCase
 
         $middleware = $this->middleware();
 
-        $this->assertSame('203.0.113.0', $this->client($middleware, '203.0.113.77')[1]);
-        $this->assertSame('2001:db8:1::', $this->client($middleware, '2001:db8:1:2:3:4:5:6')[1]);
+        $this->assertSame('203.0.113.0/24', $this->client($middleware, '203.0.113.77')[1]);
+        $this->assertSame('2001:db8:1::/48', $this->client($middleware, '2001:db8:1:2:3:4:5:6')[1]);
     }
 
     #[Test]

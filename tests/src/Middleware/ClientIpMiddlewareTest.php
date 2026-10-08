@@ -103,7 +103,7 @@ class ClientIpMiddlewareTest extends TestCase
         foreach (['1.1.1.1', '2.2.2.2', '3.3.3.3'] as $forged) {
             $result = $this->resolve($middleware, '203.0.113.7', ['X-Forwarded-For' => $forged]);
             $this->assertSame('203.0.113.7', $result['ip']);
-            $this->assertSame('203.0.113.7', $result['network']);
+            $this->assertSame('203.0.113.7/32', $result['network']);
         }
     }
 
@@ -391,13 +391,14 @@ class ClientIpMiddlewareTest extends TestCase
      */
     public static function provideNetworks(): array
     {
-        // Client, bits of ipv4, bits of ipv6, network.
+        // Client, bits of ipv4, bits of ipv6, network in CIDR notation.
         return [
-            'ipv4 is the address by default' => ['203.0.113.77', 32, 64, '203.0.113.77'],
-            'ipv6 is the /64 by default' => ['2001:db8:1:2:3:4:5:6', 32, 64, '2001:db8:1:2::'],
-            'ipv4 with a prefix' => ['203.0.113.77', 24, 64, '203.0.113.0'],
-            'ipv6 with a prefix' => ['2001:db8:1:2:3:4:5:6', 32, 48, '2001:db8:1::'],
-            'ipv4 with prefix zero' => ['203.0.113.77', 0, 64, '0.0.0.0'],
+            'ipv4 is a network of one by default' => ['203.0.113.77', 32, 64, '203.0.113.77/32'],
+            'an address of the shared range is its own network' => ['100.100.100.100', 32, 64, '100.100.100.100/32'],
+            'ipv6 is the /64 by default' => ['2001:db8:1:2:3:4:5:6', 32, 64, '2001:db8:1:2::/64'],
+            'ipv4 with a prefix' => ['203.0.113.77', 24, 64, '203.0.113.0/24'],
+            'ipv6 with a prefix' => ['2001:db8:1:2:3:4:5:6', 32, 48, '2001:db8:1::/48'],
+            'ipv4 with prefix zero' => ['203.0.113.77', 0, 64, '0.0.0.0/0'],
         ];
     }
 
@@ -433,7 +434,7 @@ class ClientIpMiddlewareTest extends TestCase
         $result = $this->resolve($middleware, '10.0.0.1', ['X-Forwarded-For' => '2001:db8:1:2:3:4:5:6']);
 
         $this->assertSame('2001:db8:1:2:3:4:5:6', $result['ip']);
-        $this->assertSame('2001:db8:1:2::', $result['network']);
+        $this->assertSame('2001:db8:1:2::/64', $result['network']);
     }
 
     // -------------------------------------------------------------------------
@@ -467,10 +468,10 @@ class ClientIpMiddlewareTest extends TestCase
     {
         $request = (new ServerRequest('GET', '/', [], null, '1.1', ['REMOTE_ADDR' => '10.0.0.1']))
             ->withAttribute(ClientIpMiddleware::ATTRIBUTE, '203.0.113.9')
-            ->withAttribute(ClientIpMiddleware::NETWORK_ATTRIBUTE, '203.0.113.0');
+            ->withAttribute(ClientIpMiddleware::NETWORK_ATTRIBUTE, '203.0.113.0/24');
 
         $this->assertSame('203.0.113.9', ClientIpMiddleware::ipOf($request));
-        $this->assertSame('203.0.113.0', ClientIpMiddleware::networkOf($request));
+        $this->assertSame('203.0.113.0/24', ClientIpMiddleware::networkOf($request));
     }
 
     #[Test]
@@ -488,7 +489,7 @@ class ClientIpMiddlewareTest extends TestCase
         );
 
         $this->assertSame('2001:db8:1:2:3:4:5:6', ClientIpMiddleware::ipOf($request));
-        $this->assertSame('2001:db8:1:2::', ClientIpMiddleware::networkOf($request));
+        $this->assertSame('2001:db8:1:2::/64', ClientIpMiddleware::networkOf($request));
     }
 
     #[Test]

@@ -28,6 +28,7 @@
         "php": "^8.5",
         "derafu/kernel": "dev-main",
         "derafu/routing": "dev-main",
+        "derafu/support": "dev-main",
         "derafu/renderer": "dev-main",
         "derafu/translation": "dev-main",
         "psr/http-server-handler": "^1.0",

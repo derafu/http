@@ -70,6 +70,10 @@ return [
         'El manejador de tipo string {handler} es inválido.',
     'Unsupported handler type: {type}.' =>
         'Tipo de manejador no soportado: {type}.',
+    'The trusted proxy "{proxy}" is not valid: it must be an IP address, a range (CIDR) or one of: {shortcuts}.' =>
+        'El proxy de confianza "{proxy}" no es válido: debe ser una dirección IP, un rango (CIDR) o uno de: {shortcuts}.',
+    'The header name "{header}" is not valid.' =>
+        'El nombre de encabezado "{header}" no es válido.',
     'Cannot fall back to plain text: response is of type {type}, not string (JSON encoding failed: {reason}).' =>
         'No se puede usar texto plano como alternativa: la respuesta es de tipo {type}, no string (falló la codificación JSON: {reason}).',
 ];

@@ -23,6 +23,10 @@ use Symfony\Component\RateLimiter\RateLimiterFactory;
 
 /**
  * Middleware for rate limiting requests.
+ *
+ * It counts by the network of the client: put `ClientIpMiddleware` before it in
+ * the pipeline, with the proxies that the application trusts (see
+ * `getIdentifier()`).
  */
 class ThrottleMiddleware implements MiddlewareInterface
 {
@@ -79,108 +83,20 @@ class ThrottleMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Gets the identifier for the request.
+     * Gets the identifier for the request: who the limit is counted for.
+     *
+     * It is the network of the client that `ClientIpMiddleware` decided (with
+     * it in the pipeline before this middleware), or the network of the address
+     * of the connection if the pipeline does not have it. The headers of the
+     * request (`X-Forwarded-For`...) are never read here: they are written by the
+     * client, so counting by them would let it choose its own counter.
      *
      * @param ServerRequestInterface $request The request.
      * @return string The identifier.
      */
     protected function getIdentifier(ServerRequestInterface $request): string
     {
-        $ip = $this->getClientIp($request);
-
-        return 'throttle_' . hash('sha256', $ip);
-    }
-
-    /**
-     * Gets the real client IP address from various sources.
-     *
-     * This method checks multiple headers and server parameters to find the real
-     * client IP address, which is especially important when using proxies,
-     * load balancers, or CDNs.
-     *
-     * @param ServerRequestInterface $request The request.
-     * @return string The client IP address.
-     */
-    protected function getClientIp(ServerRequestInterface $request): string
-    {
-        $headers = $request->getHeaders();
-        $serverParams = $request->getServerParams();
-
-        // List of headers to check for the real client IP (in order of preference).
-        $ipHeaders = [
-            'HTTP_CF_CONNECTING_IP',     // Cloudflare.
-            'HTTP_X_FORWARDED_FOR',      // Standard proxy header.
-            'HTTP_X_REAL_IP',            // Nginx proxy.
-            'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster environments.
-            'HTTP_X_FORWARDED',          // Alternative forwarded header.
-            'HTTP_FORWARDED_FOR',        // Alternative forwarded header.
-            'HTTP_FORWARDED',            // RFC 7239.
-            'HTTP_CLIENT_IP',            // Some proxies.
-            'REMOTE_ADDR',               // Direct connection (fallback)
-        ];
-
-        foreach ($ipHeaders as $header) {
-            $ip = $this->getIpFromSource($headers, $serverParams, $header);
-            if ($ip !== null && $this->isValidIp($ip)) {
-                return $ip;
-            }
-        }
-
-        return 'unknown';
-    }
-
-    /**
-     * Gets IP address from a specific header or server parameter.
-     *
-     * @param array $headers The request headers.
-     * @param array $serverParams The server parameters.
-     * @param string $source The header or server parameter name.
-     * @return string|null The IP address or null if not found.
-     */
-    protected function getIpFromSource(array $headers, array $serverParams, string $source): ?string
-    {
-        // Check server parameters first (for headers like HTTP_X_FORWARDED_FOR).
-        if (isset($serverParams[$source])) {
-            $value = $serverParams[$source];
-        }
-        // Check headers array (for headers like X-Forwarded-For).
-        elseif (isset($headers[$source])) {
-            $value = is_array($headers[$source]) ? $headers[$source][0] : $headers[$source];
-        }
-        // Check headers with HTTP_ prefix removed.
-        elseif (isset($headers[str_replace('HTTP_', '', $source)])) {
-            $headerName = str_replace('HTTP_', '', $source);
-            $value = is_array($headers[$headerName]) ? $headers[$headerName][0] : $headers[$headerName];
-        } else {
-            return null;
-        }
-
-        // Handle comma-separated IPs (like X-Forwarded-For: 192.168.1.1, 10.0.0.1).
-        if (str_contains($value, ',')) {
-            $ips = array_map('trim', explode(',', $value));
-            // Return the first valid IP (usually the original client).
-            foreach ($ips as $ip) {
-                if ($this->isValidIp($ip)) {
-                    return $ip;
-                }
-            }
-        }
-
-        return trim($value);
-    }
-
-    /**
-     * Validates if the given string is a valid IP address.
-     *
-     * @param string $ip The IP address to validate.
-     * @return bool True if valid, false otherwise.
-     */
-    protected function isValidIp(string $ip): bool
-    {
-        // Filter out private IPs and localhost for security
-        $filtered = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
-
-        return $filtered !== false;
+        return 'throttle_' . hash('sha256', ClientIpMiddleware::networkOf($request));
     }
 
     /**

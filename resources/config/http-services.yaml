@@ -9,6 +9,24 @@
 # runs (`Psr\Http\Server\RequestHandlerInterface`), the directory of the static
 # files (`StaticFilesMiddleware`) and the services of the other packages, like
 # the router.
+#
+# Who the client of a request is (`ClientIpMiddleware`) is configured with the
+# environment variables HTTP_TRUSTED_PROXIES, HTTP_CLIENT_IP_HEADERS,
+# HTTP_CLIENT_NETWORK_IPV4_PREFIX and HTTP_CLIENT_NETWORK_IPV6_PREFIX.
+
+parameters:
+    # Who the client of a request is (see ClientIpMiddleware). The proxies that
+    # the application trusts, separated by commas: addresses, ranges (CIDR) and
+    # the shortcuts `loopback`, `private` and `link-local`. By default there are
+    # none: the client is the address of the connection and no header is read.
+    env(HTTP_TRUSTED_PROXIES): ''
+    # The headers with the address of the client, separated by commas, in order of
+    # preference. They are read only when the connection comes from a trusted
+    # proxy.
+    env(HTTP_CLIENT_IP_HEADERS): 'X-Forwarded-For'
+    # The bits of the network of the client that the limits count by.
+    env(HTTP_CLIENT_NETWORK_IPV4_PREFIX): '32'
+    env(HTTP_CLIENT_NETWORK_IPV6_PREFIX): '64'
 
 services:
 
@@ -18,6 +36,12 @@ services:
         public: false
 
     Derafu\Http\Middleware\RequestFactoryMiddleware: ~
+    Derafu\Http\Middleware\ClientIpMiddleware:
+        arguments:
+            $trustedProxies: '%env(csv:HTTP_TRUSTED_PROXIES)%'
+            $headers: '%env(csv:HTTP_CLIENT_IP_HEADERS)%'
+            $ipv4Prefix: '%env(int:HTTP_CLIENT_NETWORK_IPV4_PREFIX)%'
+            $ipv6Prefix: '%env(int:HTTP_CLIENT_NETWORK_IPV6_PREFIX)%'
     Derafu\Http\Middleware\RouterMiddleware: ~
     Derafu\Http\Middleware\DispatcherMiddleware: ~
     Derafu\Http\Middleware\ResponseNormalizerMiddleware: ~

@@ -26,6 +26,7 @@ use Derafu\Http\Middleware\RouterMiddleware;
 use Derafu\Http\Service\Dispatcher;
 use Derafu\Http\Service\ProblemHandler;
 use Derafu\Http\Service\RequestHandler;
+use Derafu\Http\Service\RequestHolder;
 use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Routing\Parser\DynamicParser;
 use Derafu\Routing\Parser\StaticParser;
@@ -141,7 +142,7 @@ class HttpTest extends TestCase
         $handler = new RequestHandler(
             new ProblemFactory($params, new SafeThrowableFactory($params)),
             $problemHandler,
-            new RequestFactoryMiddleware(new RequestFactory(), $params),
+            new RequestFactoryMiddleware(new RequestFactory(), $params, new RequestHolder()),
             new RouterMiddleware($router),
             new DispatcherMiddleware($dispatcher),
             new ResponseNormalizerMiddleware(),

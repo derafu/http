@@ -42,6 +42,12 @@ services:
         public: false
 
     Derafu\Http\Middleware\RequestFactoryMiddleware: ~
+
+    # The request that is being handled and the `app` variable of the templates
+    # (an app adds the extension to the Twig ones of its renderer).
+    Derafu\Http\Service\RequestHolder: ~
+    Derafu\Http\Twig\AppVariable: ~
+    Derafu\Http\Twig\AppExtension: ~
     Derafu\Http\Middleware\ClientIpMiddleware:
         arguments:
             $trustedProxies: '%env(csv:HTTP_TRUSTED_PROXIES)%'

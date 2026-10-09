@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Http\Middleware;
 
 use Derafu\Http\Contract\RequestFactoryInterface;
+use Derafu\Http\Service\RequestHolder;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as PsrRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -27,6 +28,9 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
  *   - Converting PSR-7 ServerRequestInterface into Derafu's custom Request.
  *   - Adding the request context to the request.
  *   - Pass the custom request as the request argument for downstream middlewares.
+ *   - Give it to the `RequestHolder` while the request is handled (and take it
+ *     back at the end, also with an exception), so what is outside the pipeline
+ *     (the `app` variable of the templates) knows the request.
  *
  * This should be one of the first middlewares in the stack as other
  * middlewares might depend on having access to the Derafu request object.
@@ -43,7 +47,8 @@ class RequestFactoryMiddleware implements MiddlewareInterface
      */
     public function __construct(
         private readonly RequestFactoryInterface $requestFactory,
-        private readonly ParameterBagInterface $parameterBag
+        private readonly ParameterBagInterface $parameterBag,
+        private readonly RequestHolder $holder
     ) {
     }
 
@@ -71,7 +76,15 @@ class RequestFactoryMiddleware implements MiddlewareInterface
         // Create the custom request.
         $customRequest = $this->requestFactory->createFromPsrRequest($request);
 
-        // Return the custom request.
-        return $handler->handle($customRequest);
+        // The request is the same object for the whole pipeline: what the next
+        // middlewares add to it (route, session, user) is seen through the holder.
+        // The error pages are rendered inside the pipeline, so they see it too.
+        $this->holder->set($customRequest);
+
+        try {
+            return $handler->handle($customRequest);
+        } finally {
+            $this->holder->set(null);
+        }
     }
 }

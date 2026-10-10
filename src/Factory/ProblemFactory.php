@@ -21,6 +21,7 @@ use Derafu\Http\Enum\HttpStatus;
 use Derafu\Http\Exception\DispatcherException;
 use Derafu\Http\ValueObject\ProblemDetail;
 use Derafu\Routing\Exception\RouteNotFoundException;
+use Derafu\Translation\Contract\HeadersAwareInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -92,8 +93,10 @@ class ProblemFactory implements ProblemFactoryInterface
                 ? $throwable->getContext()
                 : [],
 
-            // Additional headers.
-            headers: $throwable instanceof HttpExceptionInterface
+            // Additional headers. `HttpExceptionInterface` is `HeadersAwareInterface`,
+            // but an exception of a package that does not depend on this one (one of
+            // `derafu/auth`, for example) can carry them too.
+            headers: $throwable instanceof HeadersAwareInterface
                 ? $throwable->getHeaders()
                 : [],
 

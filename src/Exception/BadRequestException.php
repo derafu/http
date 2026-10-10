@@ -16,6 +16,7 @@ use Derafu\Http\Contract\HttpExceptionInterface;
 use Derafu\Http\Enum\HttpStatus;
 use Derafu\Translation\Contract\TranslatableInterface;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
+use Derafu\Translation\Trait\HeadersAwareTrait;
 use Throwable;
 
 /**
@@ -31,6 +32,8 @@ use Throwable;
  */
 class BadRequestException extends TranslatableInvalidArgumentException implements HttpExceptionInterface
 {
+    use HeadersAwareTrait;
+
     /**
      * Creates a new bad request exception.
      *
@@ -79,14 +82,6 @@ class BadRequestException extends TranslatableInvalidArgumentException implement
      * {@inheritDoc}
      */
     public function getContext(): array
-    {
-        return [];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getHeaders(): array
     {
         return [];
     }

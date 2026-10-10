@@ -16,6 +16,7 @@ use Derafu\Http\Contract\HttpExceptionInterface;
 use Derafu\Http\Enum\HttpStatus;
 use Derafu\Translation\Contract\TranslatableInterface;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException;
+use Derafu\Translation\Trait\HeadersAwareTrait;
 use Throwable;
 
 /**
@@ -23,6 +24,8 @@ use Throwable;
  */
 class TooManyRequestsException extends TranslatableRuntimeException implements HttpExceptionInterface
 {
+    use HeadersAwareTrait;
+
     /**
      * Creates a new too many requests exception.
      *
@@ -40,9 +43,10 @@ class TooManyRequestsException extends TranslatableRuntimeException implements H
         string|array|TranslatableInterface $message = 'Too many requests.',
         int $code = 0,
         ?Throwable $previous = null,
-        private readonly array $headers = []
+        array $headers = []
     ) {
         parent::__construct($message, $code, $previous);
+        $this->headers = $headers;
     }
 
     /**
@@ -75,13 +79,5 @@ class TooManyRequestsException extends TranslatableRuntimeException implements H
     public function getContext(): array
     {
         return [];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getHeaders(): array
-    {
-        return $this->headers;
     }
 }

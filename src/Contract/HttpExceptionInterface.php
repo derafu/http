@@ -13,12 +13,18 @@ declare(strict_types=1);
 namespace Derafu\Http\Contract;
 
 use Derafu\Http\Enum\HttpStatus;
+use Derafu\Translation\Contract\HeadersAwareInterface;
 use Derafu\Translation\Contract\TranslatableInterface;
 
 /**
  * Interface for HTTP Translatables Exceptions.
+ *
+ * The headers (`getHeaders()`, `setHeaders()`) are `HeadersAwareInterface`, of
+ * `derafu/translation`: an exception of a package that does not depend on this
+ * one (`derafu/auth`, for example) can carry them too, and `ProblemFactory`
+ * reads them from any exception that has them, not only from this interface.
  */
-interface HttpExceptionInterface extends TranslatableInterface
+interface HttpExceptionInterface extends TranslatableInterface, HeadersAwareInterface
 {
     /**
      * A URI reference [RFC3986] that identifies the problem type.
@@ -47,11 +53,4 @@ interface HttpExceptionInterface extends TranslatableInterface
      * @return array
      */
     public function getContext(): array;
-
-    /**
-     * Additional headers to add to the response.
-     *
-     * @return array
-     */
-    public function getHeaders(): array;
 }

@@ -58,6 +58,28 @@ return [
         'Solicitud incorrecta.',
     'Too many requests.' =>
         'Demasiadas solicitudes.',
+    'Unauthorized.' =>
+        'No autorizado.',
+    'Forbidden.' =>
+        'Prohibido.',
+    'Not found.' =>
+        'No encontrado.',
+    'Method not allowed.' =>
+        'Método no permitido.',
+    'Conflict.' =>
+        'Conflicto.',
+    'Payload too large.' =>
+        'Contenido demasiado grande.',
+    'Unsupported media type.' =>
+        'Tipo de medio no soportado.',
+    'Unprocessable content.' =>
+        'Contenido no procesable.',
+    'Bad gateway.' =>
+        'Puerta de enlace incorrecta.',
+    'Service unavailable.' =>
+        'Servicio no disponible.',
+    'Gateway timeout.' =>
+        'Tiempo de espera de la puerta de enlace agotado.',
     'Route match not found. Ensure RouterMiddleware is executed before using the $request->route() method.' =>
         'No se encontró la ruta resuelta. Asegúrate de que RouterMiddleware se ejecute antes de usar el método $request->route().',
     'Session not found.' =>

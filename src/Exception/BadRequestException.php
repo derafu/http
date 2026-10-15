@@ -14,9 +14,9 @@ namespace Derafu\Http\Exception;
 
 use Derafu\Http\Contract\HttpExceptionInterface;
 use Derafu\Http\Enum\HttpStatus;
+use Derafu\Http\Trait\HttpExceptionTrait;
 use Derafu\Translation\Contract\TranslatableInterface;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
-use Derafu\Translation\Trait\HeadersAwareTrait;
 use Throwable;
 
 /**
@@ -28,16 +28,17 @@ use Throwable;
  *
  * It is an invalid argument, so the code that does not know about HTTP (a
  * service that validates what it receives) can throw it and the callers that
- * already catch the invalid argument keep working.
+ * already catch the invalid argument keep working. That is why it is not a
+ * {@see HttpException}: it uses {@see HttpExceptionTrait} instead.
  */
 class BadRequestException extends TranslatableInvalidArgumentException implements HttpExceptionInterface
 {
-    use HeadersAwareTrait;
+    use HttpExceptionTrait;
 
     /**
      * Creates a new bad request exception.
      *
-     * @param string|array|TranslatableInterface $message The exception message:
+     * @param string|array<int|string, mixed>|TranslatableInterface $message The exception message:
      *   - string: Will be used as both message and translation key.
      *   - array: First element must be string (message), remaining elements are
      *     parameters.
@@ -45,29 +46,19 @@ class BadRequestException extends TranslatableInvalidArgumentException implement
      * @param int $code The exception code.
      * @param Throwable|null $previous The previous throwable used for exception
      * chaining.
+     * @param array $headers Additional headers to
+     * add to the HTTP response.
+     * @param array<string, mixed> $context Additional context of the problem.
      */
     public function __construct(
         string|array|TranslatableInterface $message = 'Bad request.',
         int $code = 0,
-        ?Throwable $previous = null
+        ?Throwable $previous = null,
+        array $headers = [],
+        array $context = []
     ) {
         parent::__construct($message, $code, $previous);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getUriReference(): string
-    {
-        return 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400';
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getTitle(): string
-    {
-        return 'Bad Request';
+        $this->setHttpData($headers, $context);
     }
 
     /**
@@ -76,13 +67,5 @@ class BadRequestException extends TranslatableInvalidArgumentException implement
     public function getStatus(): HttpStatus
     {
         return HttpStatus::BAD_REQUEST;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getContext(): array
-    {
-        return [];
     }
 }

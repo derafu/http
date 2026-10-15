@@ -1,0 +1,60 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Derafu: HTTP - Standard-Compliant HTTP Library with Extended Features.
+ *
+ * Copyright (c) 2026 Esteban De La Fuente Rubio / Derafu <https://www.derafu.dev>
+ * Licensed under the MIT License.
+ * See LICENSE file for more details.
+ */
+
+namespace Derafu\Http\Exception;
+
+use Derafu\Http\Contract\HttpExceptionInterface;
+use Derafu\Http\Trait\HttpExceptionTrait;
+use Derafu\Translation\Contract\TranslatableInterface;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException;
+use Throwable;
+
+/**
+ * Base of the exceptions that are an HTTP status.
+ *
+ * `ProblemFactory` answers with the status of the exception instead of the
+ * generic 500, so throwing one is saying "this is not a failure of the server".
+ * A subclass only says its status (`getStatus()`) and its default message.
+ *
+ * A class that must be of another family can use {@see HttpExceptionTrait}
+ * and implement {@see HttpExceptionInterface}, as `BadRequestException` does.
+ */
+abstract class HttpException extends TranslatableRuntimeException implements HttpExceptionInterface
+{
+    use HttpExceptionTrait;
+
+    /**
+     * Creates a new HTTP exception.
+     *
+     * @param string|array<int|string, mixed>|TranslatableInterface $message The exception message:
+     *   - string: Will be used as both message and translation key.
+     *   - array: First element must be string (message), remaining elements are
+     *     parameters.
+     *   - TranslatableInterface: Will be used directly.
+     * @param int $code The exception code.
+     * @param Throwable|null $previous The previous throwable used for exception
+     * chaining.
+     * @param array $headers Additional headers to
+     * add to the HTTP response.
+     * @param array<string, mixed> $context Additional context of the problem.
+     */
+    public function __construct(
+        string|array|TranslatableInterface $message,
+        int $code = 0,
+        ?Throwable $previous = null,
+        array $headers = [],
+        array $context = []
+    ) {
+        parent::__construct($message, $code, $previous);
+        $this->setHttpData($headers, $context);
+    }
+}

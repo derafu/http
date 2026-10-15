@@ -50,7 +50,7 @@ interface HttpExceptionInterface extends TranslatableInterface, HeadersAwareInte
     /**
      * Additional context of the exception.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function getContext(): array;
 }

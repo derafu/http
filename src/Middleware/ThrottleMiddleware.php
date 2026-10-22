@@ -142,13 +142,13 @@ class ThrottleMiddleware implements MiddlewareInterface
      * Gets the headers for the rate limit.
      *
      * @param RateLimit $limit The rate limit.
-     * @return array The headers.
+     * @return array<string,string> The headers.
      */
     protected function getHeaders(RateLimit $limit): array
     {
         return [
-            'X-RateLimit-Limit' => $limit->getLimit(),
-            'X-RateLimit-Remaining' => $limit->getRemainingTokens(),
+            'X-RateLimit-Limit' => (string) $limit->getLimit(),
+            'X-RateLimit-Remaining' => (string) $limit->getRemainingTokens(),
         ];
     }
 
@@ -164,8 +164,8 @@ class ThrottleMiddleware implements MiddlewareInterface
         }
 
         $headers = $this->getHeaders($limit);
-        $headers['Retry-After'] = $limit->getRetryAfter()->getTimestamp() - time();
-        $headers['X-RateLimit-Reset'] = $limit->getRetryAfter()->getTimestamp();
+        $headers['Retry-After'] = (string) ($limit->getRetryAfter()->getTimestamp() - time());
+        $headers['X-RateLimit-Reset'] = (string) $limit->getRetryAfter()->getTimestamp();
 
         throw new TooManyRequestsException(headers: $headers);
     }

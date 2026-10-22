@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace Derafu\Http\Twig;
 
 use Derafu\Http\Contract\RequestInterface;
+use Derafu\Http\Contract\RequestStackInterface;
 use Derafu\Http\Middleware\RouterMiddleware;
-use Derafu\Http\Service\RequestHolder;
 use Derafu\Routing\Contract\RouteMatchInterface;
 use Mezzio\Authentication\UserInterface;
 use Mezzio\Flash\FlashMessageMiddleware;
@@ -24,7 +24,7 @@ use Mezzio\Session\SessionMiddleware;
 
 /**
  * The `app` variable of the templates: what every template needs to know about
- * the request that is being handled, as in Symfony.
+ * the request that is being handled.
  *
  *   - `app.request`: the request.
  *   - `app.route`: the route that matched.
@@ -39,7 +39,7 @@ use Mezzio\Session\SessionMiddleware;
  */
 final class AppVariable
 {
-    public function __construct(private readonly RequestHolder $holder)
+    public function __construct(private readonly RequestStackInterface $requests)
     {
     }
 
@@ -48,7 +48,7 @@ final class AppVariable
      */
     public function getRequest(): ?RequestInterface
     {
-        return $this->holder->get();
+        return $this->requests->getCurrentRequest();
     }
 
     /**

@@ -13,6 +13,9 @@ declare(strict_types=1);
 namespace Derafu\Http\Middleware;
 
 use Derafu\Http\Response;
+use Derafu\Support\ArrayReader;
+use Derafu\Support\ArrayType;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as PsrRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -65,7 +68,7 @@ class CorsMiddleware implements MiddlewareInterface
     /**
      * Resolved list of rules, each with all fields populated.
      *
-     * @var array<int, array<string, mixed>>
+     * @var list<array{path: string, allowedOrigins: list<string>, allowedMethods: list<string>, allowedHeaders: list<string>, allowCredentials: bool, maxAge: int}>
      */
     private array $rules;
 
@@ -86,21 +89,23 @@ class CorsMiddleware implements MiddlewareInterface
      * is used (equivalent to allowing CORS for every path).
      *
      * @param array<int, array<string, mixed>> $rules List of CORS rules.
+     * @throws InvalidArgumentException If a rule has no `path`, or an option of
+     * a rule is not of its type: a configuration that is wrong is not ignored.
      */
     public function __construct(array $rules = [])
     {
         // If no rules are provided, use a single catch-all rule with permissive
         // defaults.
         if (empty($rules)) {
-            $rules = [array_merge(['path' => '.*'], self::DEFAULTS)];
+            $rules = [['path' => '.*']];
         }
 
-        // Merge each rule with defaults so downstream logic can always rely on
-        // every key being present.
-        $this->rules = array_map(
-            fn (array $rule): array => array_merge(self::DEFAULTS, $rule),
-            $rules
-        );
+        // Read each rule with its defaults so downstream logic can always rely
+        // on every key being present.
+        $this->rules = [];
+        foreach ($rules as $index => $rule) {
+            $this->rules[] = $this->readRule($index, $rule);
+        }
     }
 
     /**
@@ -146,11 +151,41 @@ class CorsMiddleware implements MiddlewareInterface
     }
 
     /**
+     * Reads a rule, with the defaults for what it omits.
+     *
+     * @param int|string $index The position of the rule, to say which one it is.
+     * @param array<string, mixed> $rule
+     * @return array{path: string, allowedOrigins: list<string>, allowedMethods: list<string>, allowedHeaders: list<string>, allowCredentials: bool, maxAge: int}
+     * @throws InvalidArgumentException
+     */
+    private function readRule(int|string $index, array $rule): array
+    {
+        $reader = new ArrayReader($rule, 'rules.' . $index);
+
+        $path = $reader->require('path', ArrayType::string());
+        if (trim($path) === '') {
+            throw new InvalidArgumentException([
+                'The CORS rule {index} must have a "path" that is not empty: the regular expression that is matched against the path.',
+                'index' => (string) $index,
+            ]);
+        }
+
+        return [
+            'path' => $path,
+            'allowedOrigins' => $reader->stringList('allowedOrigins') ?? self::DEFAULTS['allowedOrigins'],
+            'allowedMethods' => $reader->stringList('allowedMethods') ?? self::DEFAULTS['allowedMethods'],
+            'allowedHeaders' => $reader->stringList('allowedHeaders') ?? self::DEFAULTS['allowedHeaders'],
+            'allowCredentials' => $reader->bool('allowCredentials') ?? self::DEFAULTS['allowCredentials'],
+            'maxAge' => $reader->int('maxAge') ?? self::DEFAULTS['maxAge'],
+        ];
+    }
+
+    /**
      * Returns the first rule whose path pattern matches the given path,
      * or null if none match.
      *
      * @param string $path The request path.
-     * @return array<string, mixed>|null
+     * @return array{path: string, allowedOrigins: list<string>, allowedMethods: list<string>, allowedHeaders: list<string>, allowCredentials: bool, maxAge: int}|null
      */
     private function matchRule(string $path): ?array
     {
@@ -183,7 +218,7 @@ class CorsMiddleware implements MiddlewareInterface
      * Builds the 204 response for an OPTIONS preflight request.
      *
      * @param string $origin The allowed origin.
-     * @param array<string, mixed> $rule The matched rule.
+     * @param array{path: string, allowedOrigins: list<string>, allowedMethods: list<string>, allowedHeaders: list<string>, allowCredentials: bool, maxAge: int} $rule The matched rule.
      * @return PsrResponseInterface
      */
     private function buildPreflightResponse(
@@ -205,7 +240,7 @@ class CorsMiddleware implements MiddlewareInterface
      *
      * @param PsrResponseInterface $response The response to decorate.
      * @param string $origin The request origin.
-     * @param array<string, mixed> $rule The matched rule.
+     * @param array{path: string, allowedOrigins: list<string>, allowedMethods: list<string>, allowedHeaders: list<string>, allowCredentials: bool, maxAge: int} $rule The matched rule.
      * @return PsrResponseInterface
      */
     private function addCorsHeaders(

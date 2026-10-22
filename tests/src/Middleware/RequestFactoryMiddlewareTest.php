@@ -16,7 +16,8 @@ use Derafu\Http\Contract\RequestInterface;
 use Derafu\Http\Factory\RequestFactory;
 use Derafu\Http\Middleware\RequestFactoryMiddleware;
 use Derafu\Http\Request;
-use Derafu\Http\Service\RequestHolder;
+use Derafu\Http\Response as DerafuResponse;
+use Derafu\TestsHttp\Fixture\CountingHandler;
 use Nyholm\Psr7\Response;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -26,76 +27,75 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use RuntimeException;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 
 /**
- * The request of the pipeline is given to the holder while it is handled, and
- * taken back when it ends, also with an exception.
+ * The request of the pipeline is the one of Derafu, with the context of the
+ * kernel when there is one.
  */
 #[CoversClass(RequestFactoryMiddleware::class)]
-#[UsesClass(RequestHolder::class)]
 #[UsesClass(RequestFactory::class)]
 #[UsesClass(Request::class)]
+#[UsesClass(DerafuResponse::class)]
 final class RequestFactoryMiddlewareTest extends TestCase
 {
-    private RequestHolder $holder;
-
-    private RequestFactoryMiddleware $middleware;
-
-    protected function setUp(): void
+    /**
+     * @param array<string, mixed> $context
+     */
+    private function receivedWith(array $context): ServerRequestInterface
     {
-        $this->holder = new RequestHolder();
-        $this->middleware = new RequestFactoryMiddleware(
+        $middleware = new RequestFactoryMiddleware(
             new RequestFactory(),
-            new ParameterBag(['kernel.context' => []]),
-            $this->holder
+            new ParameterBag(['kernel.context' => $context])
         );
-    }
-
-    #[Test]
-    public function theHolderHasTheRequestWhileItIsHandled(): void
-    {
-        $handler = new class ($this->holder) implements RequestHandlerInterface {
-            public ?RequestInterface $request = null;
-
-            public ?RequestInterface $held = null;
-
-            public function __construct(private readonly RequestHolder $holder)
-            {
-            }
+        $handler = new class () implements RequestHandlerInterface {
+            public ?ServerRequestInterface $request = null;
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                $this->request = $request instanceof RequestInterface ? $request : null;
-                $this->held = $this->holder->get();
+                $this->request = $request;
 
                 return new Response();
             }
         };
 
-        $this->middleware->process(new ServerRequest('GET', 'https://example.com/'), $handler);
+        $middleware->process(new ServerRequest('GET', 'https://example.com/'), $handler);
+        $this->assertInstanceOf(ServerRequestInterface::class, $handler->request);
 
-        $this->assertInstanceOf(RequestInterface::class, $handler->request);
-        $this->assertSame($handler->request, $handler->held);
-        $this->assertNull($this->holder->get());
+        return $handler->request;
     }
 
     #[Test]
-    public function theHolderIsEmptiedWhenTheRequestFails(): void
+    public function theNextMiddlewareGetsTheRequestOfDerafu(): void
     {
-        $handler = new class () implements RequestHandlerInterface {
-            public function handle(ServerRequestInterface $request): ResponseInterface
-            {
-                throw new RuntimeException('Boom.');
-            }
-        };
+        $this->assertInstanceOf(RequestInterface::class, $this->receivedWith([]));
+    }
 
-        try {
-            $this->middleware->process(new ServerRequest('GET', 'https://example.com/'), $handler);
-            $this->fail('The exception must go on.');
-        } catch (RuntimeException) {
-            $this->assertNull($this->holder->get());
-        }
+    #[Test]
+    public function theContextOfTheKernelIsAnAttributeOfTheRequest(): void
+    {
+        $request = $this->receivedWith(['name' => 'app']);
+
+        $this->assertSame(['name' => 'app'], $request->getAttribute(RequestFactoryMiddleware::CONTEXT_ATTRIBUTE));
+    }
+
+    #[Test]
+    public function withoutContextThereIsNoAttribute(): void
+    {
+        $request = $this->receivedWith([]);
+
+        $this->assertArrayNotHasKey(RequestFactoryMiddleware::CONTEXT_ATTRIBUTE, $request->getAttributes());
+    }
+
+    #[Test]
+    public function theResponseOfTheNextMiddlewareIsReturned(): void
+    {
+        $middleware = new RequestFactoryMiddleware(new RequestFactory(), new ParameterBag(['kernel.context' => []]));
+        $handler = new CountingHandler();
+
+        $response = $middleware->process(new ServerRequest('GET', 'https://example.com/'), $handler);
+
+        $this->assertSame(1, $handler->calls);
+        $this->assertSame(200, $response->getStatusCode());
     }
 }

@@ -25,7 +25,7 @@ interface DispatcherInterface
      *
      * @param RouteMatchInterface $match The matched route.
      * @param RequestInterface $request The HTTP request.
-     * @param array $context Additional context associated with the HTTP request.
+     * @param array<string,mixed> $context Additional context associated with the HTTP request.
      * @return mixed The response.
      * @throws DispatcherException If the handler cannot be dispatched.
      */

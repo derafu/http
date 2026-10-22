@@ -79,7 +79,7 @@ trait HttpExceptionTrait
      * Sets the headers and the context of the response. It is called by the
      * constructor of the exception.
      *
-     * @param array $headers
+     * @param array<string,string|list<string>> $headers
      * @param array<string, mixed> $context
      */
     protected function setHttpData(array $headers, array $context): void

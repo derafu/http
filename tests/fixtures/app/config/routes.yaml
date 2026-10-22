@@ -1,0 +1,6 @@
+# The route that is declared in the file; the ones of the controllers are
+# declared by their attributes.
+
+helper:
+    path: /helper
+    handler: 'Derafu\TestsHttp\Fixture\Controller\HomeController::helper'

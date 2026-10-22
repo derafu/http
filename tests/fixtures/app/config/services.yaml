@@ -1,0 +1,42 @@
+# The services of a small application that uses derafu/http, as the tests of the
+# kernel run it: the file of the package, a router and what the pipeline needs.
+
+imports:
+    - { resource: '../../../../resources/config/http-services.yaml' }
+
+services:
+
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Psr\Http\Server\RequestHandlerInterface:
+        class: Derafu\Http\Service\RequestHandler
+        public: true
+        arguments:
+            $middlewares:
+                - '@Derafu\Http\Middleware\RequestFactoryMiddleware'
+                - '@Derafu\Http\Middleware\RouterMiddleware'
+                - '@Derafu\Http\Middleware\DispatcherMiddleware'
+                - '@Derafu\Http\Middleware\ResponseNormalizerMiddleware'
+
+    Derafu\Routing\Contract\RouterInterface:
+        class: Derafu\Routing\Router
+        arguments:
+            $parsers:
+                - '@Derafu\Routing\Parser\StaticParser'
+                - '@Derafu\Routing\Parser\DynamicParser'
+            $routes: '%routes%'
+
+    Derafu\Routing\Parser\StaticParser: ~
+
+    Derafu\Routing\Parser\DynamicParser: ~
+
+    # No route of this application has a template.
+    Derafu\Renderer\Contract\RendererInterface:
+        class: Derafu\TestsHttp\Fixture\UnusedRenderer
+
+    # The invoker takes the controller from the container, so it is public.
+    Derafu\TestsHttp\Fixture\Controller\HomeController:
+        public: true

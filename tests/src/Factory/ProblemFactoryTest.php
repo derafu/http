@@ -15,12 +15,15 @@ namespace Derafu\TestsHttp\Factory;
 use Derafu\Http\Contract\ProblemDetailInterface;
 use Derafu\Http\Enum\HttpStatus;
 use Derafu\Http\Exception\BadRequestException;
+use Derafu\Http\Exception\DispatcherException;
 use Derafu\Http\Exception\TooManyRequestsException;
 use Derafu\Http\Factory\ProblemFactory;
 use Derafu\Http\Factory\SafeThrowableFactory;
 use Derafu\Http\Request;
+use Derafu\Http\Support\KernelParameters;
 use Derafu\Http\ValueObject\ProblemDetail;
 use Derafu\Http\ValueObject\SafeThrowable;
+use Derafu\Routing\Exception\RouteNotFoundException;
 use Derafu\Translation\Exception\Core\TranslatableException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -43,12 +46,14 @@ use TypeError;
  */
 #[CoversClass(ProblemFactory::class)]
 #[UsesClass(SafeThrowableFactory::class)]
+#[UsesClass(KernelParameters::class)]
 #[UsesClass(Request::class)]
 #[UsesClass(ProblemDetail::class)]
 #[UsesClass(SafeThrowable::class)]
 #[UsesClass(HttpStatus::class)]
 #[UsesClass(BadRequestException::class)]
 #[UsesClass(TooManyRequestsException::class)]
+#[UsesClass(DispatcherException::class)]
 final class ProblemFactoryTest extends TestCase
 {
     private function translator(): Translator
@@ -176,5 +181,29 @@ final class ProblemFactoryTest extends TestCase
     {
         $this->assertSame('Internal Server Error', $this->title(new RuntimeException('Failure.'), null));
         $this->assertSame('Too Many Requests', $this->title(new TooManyRequestsException(), null));
+    }
+
+    public function testTheCodeOfAThrowableThatIsAStatusIsItsStatus(): void
+    {
+        $problem = $this->problem(new RuntimeException('Not allowed.', 403), null);
+
+        $this->assertSame(403, $problem->getStatus());
+        $this->assertSame('Forbidden', $problem->getTitle());
+    }
+
+    public function testACodeThatIsNotAStatusIsAServerError(): void
+    {
+        $this->assertSame(500, $this->problem(new RuntimeException('Boom.', 7), null)->getStatus());
+        $this->assertSame(500, $this->problem(new RuntimeException('Boom.'), null)->getStatus());
+    }
+
+    public function testARouteThatWasNotFoundIsA404(): void
+    {
+        $this->assertSame(404, $this->problem(new RouteNotFoundException('No route.'), null)->getStatus());
+    }
+
+    public function testAHandlerThatCanNotBeDispatchedIsA500(): void
+    {
+        $this->assertSame(500, $this->problem(new DispatcherException('Invalid handler.'), null)->getStatus());
     }
 }

@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Http\DependencyInjection;
 
 use Derafu\Http\Contract\ControllerInterface;
+use Derafu\Http\Support\KernelParameters;
 use Derafu\Routing\Attribute\Route;
 use ReflectionClass;
 use ReflectionMethod;
@@ -42,10 +43,13 @@ class ControllerConfigurationCompilerPass implements CompilerPassInterface
             }
 
             // Process controller.
-            $this->processController($definition->getClass(), $container);
+            $this->processController($class, $container);
         }
     }
 
+    /**
+     * @param class-string $class
+     */
     protected function processController(
         string $class,
         ContainerBuilder $container
@@ -74,7 +78,7 @@ class ControllerConfigurationCompilerPass implements CompilerPassInterface
         ContainerBuilder $container
     ): void {
         // Get routes from container.
-        $routes = $container->getParameter('routes');
+        $routes = KernelParameters::array($container->getParameterBag(), 'routes');
 
         // Load route attributes from action.
         $routeAttributes = $action->getAttributes(Route::class);

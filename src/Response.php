@@ -31,7 +31,7 @@ class Response implements ResponseInterface
 
     /**
      * @param int $status Status code.
-     * @param array $headers Response headers.
+     * @param array<string,string|list<string>> $headers Response headers.
      * @param string|resource|StreamInterface|null $body Response body.
      * @param string $version Protocol version.
      * @param string|null $reason Reason phrase (when empty a default will be
@@ -135,8 +135,10 @@ class Response implements ResponseInterface
      */
     public function withStatus($code, $reasonPhrase = ''): static
     {
-        $this->psrResponse = $this->psrResponse->withStatus($code, $reasonPhrase);
-        return $this;
+        $new = clone $this;
+        $new->psrResponse = $this->psrResponse->withStatus($code, $reasonPhrase);
+
+        return $new;
     }
 
     /**
@@ -160,8 +162,10 @@ class Response implements ResponseInterface
      */
     public function withProtocolVersion($version): static
     {
-        $this->psrResponse = $this->psrResponse->withProtocolVersion($version);
-        return $this;
+        $new = clone $this;
+        $new->psrResponse = $this->psrResponse->withProtocolVersion($version);
+
+        return $new;
     }
 
     /**
@@ -201,8 +205,10 @@ class Response implements ResponseInterface
      */
     public function withHeader($name, $value): static
     {
-        $this->psrResponse = $this->psrResponse->withHeader($name, $value);
-        return $this;
+        $new = clone $this;
+        $new->psrResponse = $this->psrResponse->withHeader($name, $value);
+
+        return $new;
     }
 
     /**
@@ -210,8 +216,10 @@ class Response implements ResponseInterface
      */
     public function withAddedHeader($name, $value): static
     {
-        $this->psrResponse = $this->psrResponse->withAddedHeader($name, $value);
-        return $this;
+        $new = clone $this;
+        $new->psrResponse = $this->psrResponse->withAddedHeader($name, $value);
+
+        return $new;
     }
 
     /**
@@ -219,8 +227,10 @@ class Response implements ResponseInterface
      */
     public function withoutHeader($name): static
     {
-        $this->psrResponse = $this->psrResponse->withoutHeader($name);
-        return $this;
+        $new = clone $this;
+        $new->psrResponse = $this->psrResponse->withoutHeader($name);
+
+        return $new;
     }
 
     /**
@@ -236,7 +246,9 @@ class Response implements ResponseInterface
      */
     public function withBody(StreamInterface $body): static
     {
-        $this->psrResponse = $this->psrResponse->withBody($body);
-        return $this;
+        $new = clone $this;
+        $new->psrResponse = $this->psrResponse->withBody($body);
+
+        return $new;
     }
 }

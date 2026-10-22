@@ -28,7 +28,7 @@ class ForbiddenException extends HttpException
      * @param int $code The exception code.
      * @param Throwable|null $previous The previous throwable used for exception
      * chaining.
-     * @param array $headers Additional headers to
+     * @param array<string,string|list<string>> $headers Additional headers to
      * add to the HTTP response.
      * @param array<string, mixed> $context Additional context of the problem.
      */

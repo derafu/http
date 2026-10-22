@@ -151,10 +151,13 @@ class ThrottleMiddlewareTest extends TestCase
             $this->fail('The limit is over.');
         } catch (TooManyRequestsException $e) {
             $headers = $e->getHeaders();
-            $this->assertSame(self::LIMIT, $headers['X-RateLimit-Limit']);
-            $this->assertSame(0, $headers['X-RateLimit-Remaining']);
-            $this->assertGreaterThan(0, $headers['Retry-After']);
-            $this->assertArrayHasKey('X-RateLimit-Reset', $headers);
+            // The values of the headers are text.
+            $this->assertSame((string) self::LIMIT, $headers['X-RateLimit-Limit']);
+            $this->assertSame('0', $headers['X-RateLimit-Remaining']);
+            $this->assertIsString($headers['Retry-After']);
+            $this->assertGreaterThan(0, (int) $headers['Retry-After']);
+            $this->assertIsString($headers['X-RateLimit-Reset']);
+            $this->assertGreaterThan(time() - 1, (int) $headers['X-RateLimit-Reset']);
         }
     }
 
@@ -256,5 +259,38 @@ class ThrottleMiddlewareTest extends TestCase
 
         // What has no address is one client: it is not a way to have no limit.
         $this->assertSame(0, $this->accepted([$this->throttle], 'not-an-ip'));
+    }
+
+    #[Test]
+    public function shouldLetPassWhatAnExtensionSaysItDoesNotProcess(): void
+    {
+        // The extension point: a subclass that does not limit the health check.
+        $throttle = new class (new RateLimiterFactory(
+            ['id' => 'skip', 'policy' => 'fixed_window', 'limit' => 1, 'interval' => '1 hour'],
+            new InMemoryStorage()
+        )) extends ThrottleMiddleware {
+            protected function shouldProcess(ServerRequestInterface $request): bool
+            {
+                return $request->getUri()->getPath() !== '/health';
+            }
+        };
+        $handler = new class () implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response();
+            }
+        };
+
+        // Without limit headers: it did not go through the limiter.
+        for ($i = 0; $i < 5; $i++) {
+            $response = $throttle->process(new ServerRequest('GET', '/health', [], null, '1.1', ['REMOTE_ADDR' => '203.0.113.7']), $handler);
+            $this->assertSame(200, $response->getStatusCode());
+            $this->assertFalse($response->hasHeader('X-RateLimit-Limit'));
+        }
+
+        // The rest of the paths are limited: one request, then no more.
+        $throttle->process(new ServerRequest('GET', '/page', [], null, '1.1', ['REMOTE_ADDR' => '203.0.113.7']), $handler);
+        $this->expectException(TooManyRequestsException::class);
+        $throttle->process(new ServerRequest('GET', '/page', [], null, '1.1', ['REMOTE_ADDR' => '203.0.113.7']), $handler);
     }
 }

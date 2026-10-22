@@ -41,8 +41,8 @@ class ProblemDetail implements ProblemDetailInterface
      * @param string $detail
      * @param RequestInterface $request
      * @param SafeThrowableInterface $throwable
-     * @param array $context
-     * @param array $headers
+     * @param array<string,mixed> $context
+     * @param array<string,string|list<string>> $headers
      * @param string $timestamp
      * @param string $environment
      * @param boolean $debug
@@ -133,6 +133,8 @@ class ProblemDetail implements ProblemDetailInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string,mixed>
      */
     public function getContext(): array
     {
@@ -141,6 +143,8 @@ class ProblemDetail implements ProblemDetailInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string,string|list<string>>
      */
     public function getHeaders(): array
     {
@@ -216,7 +220,7 @@ class ProblemDetail implements ProblemDetailInterface
         if (!empty($this->headers)) {
             $output .= "## Headers\n\n";
             foreach ($this->headers as $name => $value) {
-                $output .= "- {$name}: {$value}\n";
+                $output .= "- {$name}: " . implode(', ', (array) $value) . "\n";
             }
             $output .= "\n";
         }
@@ -231,6 +235,8 @@ class ProblemDetail implements ProblemDetailInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string,mixed>
      */
     public function jsonSerialize(): array
     {

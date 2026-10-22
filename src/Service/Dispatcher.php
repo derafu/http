@@ -15,6 +15,7 @@ namespace Derafu\Http\Service;
 use Closure;
 use Derafu\Http\Contract\DispatcherInterface;
 use Derafu\Http\Contract\RequestInterface;
+use Derafu\Http\Contract\RequestStackInterface;
 use Derafu\Http\Exception\DispatcherException;
 use Derafu\Http\Response;
 use Derafu\Renderer\Contract\RendererInterface;
@@ -40,10 +41,13 @@ class Dispatcher implements DispatcherInterface
      *
      * @param InvokerInterface $invoker The PHP-DI invoker.
      * @param RendererInterface $renderer The renderer service.
+     * @param RequestStackInterface $requests The requests that are being
+     * dispatched: the handler is called with its request at the top.
      */
     public function __construct(
         private readonly InvokerInterface $invoker,
-        private readonly RendererInterface $renderer
+        private readonly RendererInterface $renderer,
+        private readonly RequestStackInterface $requests
     ) {
     }
 
@@ -55,7 +59,24 @@ class Dispatcher implements DispatcherInterface
         RequestInterface $request,
         array $context = []
     ): mixed {
-        return $this->callHandler($match->getHandler(), [
+        $this->requests->push($request);
+
+        try {
+            return $this->callHandler($match->getHandler(), $this->parameters($match, $request, $context));
+        } finally {
+            $this->requests->pop();
+        }
+    }
+
+    /**
+     * The parameters that the handler can ask for.
+     *
+     * @param array<string,mixed> $context
+     * @return array<string,mixed>
+     */
+    private function parameters(RouteMatchInterface $match, RequestInterface $request, array $context): array
+    {
+        return [
             // Core objects.
             RequestInterface::class => $request,
             RouteMatchInterface::class => $match,
@@ -72,7 +93,7 @@ class Dispatcher implements DispatcherInterface
 
             // Context array if needed.
             'context' => $context,
-        ]);
+        ];
     }
 
     /**

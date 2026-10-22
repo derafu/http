@@ -12,12 +12,18 @@ declare(strict_types=1);
 
 namespace Derafu\TestsHttp\Twig;
 
+use Derafu\Http\Contract\RequestInterface;
 use Derafu\Http\Factory\RequestFactory;
 use Derafu\Http\Request;
-use Derafu\Http\Service\RequestHolder;
+use Derafu\Http\Service\Dispatcher;
+use Derafu\Http\Service\RequestStack;
 use Derafu\Http\Twig\AppExtension;
 use Derafu\Http\Twig\AppVariable;
 use Derafu\Routing\Contract\RouteMatchInterface;
+use Derafu\Routing\ValueObject\Route;
+use Derafu\Routing\ValueObject\RouteMatch;
+use Derafu\TestsHttp\Fixture\UnusedRenderer;
+use Invoker\Invoker;
 use Mezzio\Authentication\UserInterface;
 use Mezzio\Flash\FlashMessageMiddleware;
 use Mezzio\Flash\FlashMessagesInterface;
@@ -38,34 +44,48 @@ use Twig\Loader\ArrayLoader;
  */
 #[CoversClass(AppVariable::class)]
 #[CoversClass(AppExtension::class)]
-#[UsesClass(RequestHolder::class)]
+#[UsesClass(RequestStack::class)]
+#[UsesClass(Dispatcher::class)]
 #[UsesClass(RequestFactory::class)]
 #[UsesClass(Request::class)]
 final class AppVariableTest extends TestCase
 {
-    private RequestHolder $holder;
+    private RequestStack $requests;
 
     private AppVariable $app;
 
     protected function setUp(): void
     {
-        $this->holder = new RequestHolder();
-        $this->app = new AppVariable($this->holder);
+        $this->requests = new RequestStack();
+        $this->app = new AppVariable($this->requests);
     }
 
     /**
-     * Gives the holder a request with some attributes, as the pipeline would.
+     * A request with some attributes, as the middlewares leave it.
+     *
+     * @param array<string, mixed> $attributes
+     */
+    private function request(array $attributes): RequestInterface
+    {
+        $request = (new RequestFactory())->createFromPsrRequest(
+            new ServerRequest('GET', 'https://example.com/page')
+        );
+        foreach ($attributes as $name => $value) {
+            $request = $request->withAttribute($name, $value);
+        }
+        $this->assertInstanceOf(RequestInterface::class, $request);
+
+        return $request;
+    }
+
+    /**
+     * Gives the stack a request with some attributes, as the dispatcher would.
      *
      * @param array<string, mixed> $attributes
      */
     private function handle(array $attributes): void
     {
-        $this->holder->set((new RequestFactory())->createFromPsrRequest(
-            new ServerRequest('GET', 'https://example.com/page')
-        ));
-        foreach ($attributes as $name => $value) {
-            $this->holder->get()?->withAttribute($name, $value);
-        }
+        $this->requests->push($this->request($attributes));
     }
 
     #[Test]
@@ -91,15 +111,32 @@ final class AppVariableTest extends TestCase
     }
 
     #[Test]
-    public function whatTheMiddlewaresAddToTheRequestLaterIsSeen(): void
+    public function theRequestAtTheTopOfTheStackIsTheOneThatIsSeen(): void
     {
         $this->handle([]);
         $this->assertNull($this->app->getUser());
 
+        // A dispatch inside the other one, with a request that has a user.
         $user = $this->createStub(UserInterface::class);
-        $this->holder->get()?->withAttribute(UserInterface::class, $user);
-
+        $this->handle([UserInterface::class => $user]);
         $this->assertSame($user, $this->app->getUser());
+
+        // When it ends the request below is the current one again.
+        $this->requests->pop();
+        $this->assertNull($this->app->getUser());
+    }
+
+    #[Test]
+    public function aHandlerSeesTheUserThatTheMiddlewaresAddedToItsRequest(): void
+    {
+        $user = $this->createStub(UserInterface::class);
+        $dispatcher = new Dispatcher(new Invoker(), new UnusedRenderer(), $this->requests);
+        $match = new RouteMatch(new Route('page', '/page', fn (): ?UserInterface => $this->app->getUser()));
+
+        $seen = $dispatcher->dispatch($match, $this->request([UserInterface::class => $user]));
+
+        $this->assertSame($user, $seen);
+        $this->assertNull($this->app->getUser());
     }
 
     #[Test]

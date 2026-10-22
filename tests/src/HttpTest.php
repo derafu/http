@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\TestsHttp;
 
+use Closure;
 use Derafu\Http\Contract\ProblemDetailInterface;
 use Derafu\Http\Contract\ProblemHandlerInterface;
 use Derafu\Http\Contract\ResponseInterface;
@@ -26,7 +27,7 @@ use Derafu\Http\Middleware\RouterMiddleware;
 use Derafu\Http\Service\Dispatcher;
 use Derafu\Http\Service\ProblemHandler;
 use Derafu\Http\Service\RequestHandler;
-use Derafu\Http\Service\RequestHolder;
+use Derafu\Http\Service\RequestStack;
 use Derafu\Renderer\Contract\RendererInterface;
 use Derafu\Routing\Parser\DynamicParser;
 use Derafu\Routing\Parser\StaticParser;
@@ -63,6 +64,8 @@ class HttpTest extends TestCase
      *
      * A new `RequestHandler` is built for each request on purpose: it keeps a
      * mutable position in the chain, so it cannot be reused.
+     *
+     * @param array<int|string, Closure|string> $pages
      */
     private function send(
         string $path,
@@ -121,7 +124,7 @@ class HttpTest extends TestCase
                 $parameters['context']['error']->getStatus()
             )
         );
-        $dispatcher = new Dispatcher(new Invoker(null, $this->controllers()), $renderer);
+        $dispatcher = new Dispatcher(new Invoker(null, $this->controllers()), $renderer, new RequestStack());
 
         $this->problemHandlerCalls = 0;
         $problemHandler = new class (new ProblemHandler($dispatcher, $pages), $this->problemHandlerCalls) implements ProblemHandlerInterface {
@@ -142,7 +145,7 @@ class HttpTest extends TestCase
         $handler = new RequestHandler(
             new ProblemFactory($params, new SafeThrowableFactory($params)),
             $problemHandler,
-            new RequestFactoryMiddleware(new RequestFactory(), $params, new RequestHolder()),
+            new RequestFactoryMiddleware(new RequestFactory(), $params),
             new RouterMiddleware($router),
             new DispatcherMiddleware($dispatcher),
             new ResponseNormalizerMiddleware(),
@@ -208,9 +211,15 @@ class HttpTest extends TestCase
         };
     }
 
+    /**
+     * @return array<mixed>
+     */
     private function json(PsrResponseInterface $response): array
     {
-        return json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertIsArray($data);
+
+        return $data;
     }
 
     public function testSimulateHttpRequestWithResponse200(): void

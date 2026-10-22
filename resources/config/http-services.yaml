@@ -43,9 +43,10 @@ services:
 
     Derafu\Http\Middleware\RequestFactoryMiddleware: ~
 
-    # The request that is being handled and the `app` variable of the templates
-    # (an app adds the extension to the Twig ones of its renderer).
-    Derafu\Http\Service\RequestHolder: ~
+    # The requests that are being dispatched and the `app` variable of the
+    # templates (an app adds the extension to the Twig ones of its renderer).
+    Derafu\Http\Contract\RequestStackInterface:
+        class: Derafu\Http\Service\RequestStack
     Derafu\Http\Twig\AppVariable: ~
     Derafu\Http\Twig\AppExtension: ~
     Derafu\Http\Middleware\ClientIpMiddleware:
@@ -63,6 +64,9 @@ services:
 
     Derafu\Http\Contract\DispatcherInterface:
         class: Derafu\Http\Service\Dispatcher
+
+    Derafu\Http\Contract\ResponseNormalizerInterface:
+        class: Derafu\Http\Service\ResponseNormalizer
 
     Derafu\Http\Contract\ProblemHandlerInterface:
         class: Derafu\Http\Service\ProblemHandler

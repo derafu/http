@@ -15,6 +15,7 @@ namespace Derafu\TestsHttp\Middleware;
 use Derafu\Http\Enum\ContentType;
 use Derafu\Http\Middleware\StaticFilesMiddleware;
 use Derafu\Http\Response;
+use Derafu\TestsHttp\Fixture\RawPathUri;
 use Nyholm\Psr7\Response as PsrResponse;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -37,7 +38,8 @@ use Psr\Http\Server\RequestHandlerInterface;
  *   $base/outside.css               A file outside of the directory.
  */
 #[CoversClass(StaticFilesMiddleware::class)]
-#[UsesClass(ContentType::class), UsesClass(Response::class)]
+#[UsesClass(ContentType::class)]
+#[UsesClass(Response::class)]
 class StaticFilesMiddlewareTest extends TestCase
 {
     private string $base;
@@ -101,6 +103,9 @@ class StaticFilesMiddlewareTest extends TestCase
         };
     }
 
+    /**
+     * @param array<string,string|list<string>> $headers
+     */
     private function process(
         string $path,
         ?string $directory = null,
@@ -173,6 +178,9 @@ class StaticFilesMiddlewareTest extends TestCase
         $this->assertNotServed($this->process($path));
     }
 
+    /**
+     * @return array<string, array{string}>
+     */
     public static function unsafePathsProvider(): array
     {
         return [
@@ -234,6 +242,9 @@ class StaticFilesMiddlewareTest extends TestCase
         );
     }
 
+    /**
+     * @return array<string, array{string}>
+     */
     public static function equivalentDirectoriesProvider(): array
     {
         return [
@@ -255,6 +266,9 @@ class StaticFilesMiddlewareTest extends TestCase
         $this->assertNotServed($this->process('/css/ok.css', null, $method));
     }
 
+    /**
+     * @return array<string, array{string}>
+     */
     public static function notAllowedMethodsProvider(): array
     {
         return [
@@ -297,6 +311,9 @@ class StaticFilesMiddlewareTest extends TestCase
         $this->assertServed($this->process('/' . $path), $body);
     }
 
+    /**
+     * @return array<string, array{string, string}>
+     */
     public static function wellKnownFilesProvider(): array
     {
         return [
@@ -325,6 +342,9 @@ class StaticFilesMiddlewareTest extends TestCase
         }
     }
 
+    /**
+     * @return array<string, array{string}>
+     */
     public static function wellKnownAbuseProvider(): array
     {
         return [
@@ -336,5 +356,17 @@ class StaticFilesMiddlewareTest extends TestCase
             'different-case' => ['/.WELL-KNOWN/ok.txt'],
             'hidden-sibling' => ['/.well-known.txt'],
         ];
+    }
+
+    public function testAPathWithANullByteIsNotServedWhateverTheUriDoesWithIt(): void
+    {
+        // A URI that does not encode the path (the one of Nyholm turns the
+        // null byte into `%00`, so it never reaches the middleware).
+        $request = (new ServerRequest('GET', 'http://localhost/'))
+            ->withUri(new RawPathUri("/css/ok.css\0.png"));
+
+        $response = (new StaticFilesMiddleware($this->directory))->process($request, $this->next());
+
+        $this->assertNotServed($response);
     }
 }

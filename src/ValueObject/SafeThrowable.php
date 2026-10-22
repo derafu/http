@@ -16,6 +16,9 @@ use Derafu\Http\Contract\SafeThrowableInterface;
 
 class SafeThrowable implements SafeThrowableInterface
 {
+    /**
+     * @param list<array{file?: string, line?: int, function?: string, class?: string, type?: string, args?: array<mixed>}> $trace
+     */
     public function __construct(
         private readonly string $class,
         private readonly int $code,
@@ -69,6 +72,8 @@ class SafeThrowable implements SafeThrowableInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return list<array{file?: string, line?: int, function?: string, class?: string, type?: string, args?: array<mixed>}>
      */
     public function getTrace(bool $includeArgs = false): array
     {

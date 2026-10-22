@@ -14,6 +14,7 @@ namespace Derafu\Http\Factory;
 
 use Derafu\Http\Contract\SafeThrowableFactoryInterface;
 use Derafu\Http\Contract\SafeThrowableInterface;
+use Derafu\Http\Support\KernelParameters;
 use Derafu\Http\ValueObject\SafeThrowable;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Throwable;
@@ -78,7 +79,7 @@ class SafeThrowableFactory implements SafeThrowableFactoryInterface
      */
     private function obfuscatePath(string $path): string
     {
-        $projectDir = $this->params->get('kernel.project_dir');
+        $projectDir = KernelParameters::string($this->params, 'kernel.project_dir');
 
         return str_replace(
             $projectDir . '/',

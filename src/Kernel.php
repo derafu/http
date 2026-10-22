@@ -22,6 +22,7 @@ use Invoker\InvokerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
@@ -73,7 +74,7 @@ class Kernel extends MicroKernel implements KernelInterface
      * Lists the loader classes that can process different configuration formats.
      * Each loader is responsible for parsing and loading a specific format.
      *
-     * @var array<class-string>
+     * @var array<class-string<LoaderInterface>>
      */
     protected const CONFIG_LOADERS = [
         PhpFileLoader::class,
@@ -95,6 +96,7 @@ class Kernel extends MicroKernel implements KernelInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        /** @var RequestHandlerInterface $handler */
         $handler = $this->getContainer()->get(RequestHandlerInterface::class);
 
         return $handler->handle($request);

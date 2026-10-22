@@ -79,9 +79,9 @@ interface ProblemDetailInterface extends Stringable, JsonSerializable
     /**
      * Gets the original request.
      *
-     * @return RequestInterface|null
+     * @return RequestInterface
      */
-    public function getRequest(): ?RequestInterface;
+    public function getRequest(): RequestInterface;
 
     /**
      * Get a safe instance of the throwable error.
@@ -93,14 +93,14 @@ interface ProblemDetailInterface extends Stringable, JsonSerializable
     /**
      * Get the context of the problem.
      *
-     * @return array
+     * @return array<string,mixed>
      */
     public function getContext(): array;
 
     /**
      * Gets the additional headers.
      *
-     * @return array
+     * @return array<string,string|list<string>>
      */
     public function getHeaders(): array;
 

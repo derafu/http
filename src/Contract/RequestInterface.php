@@ -74,8 +74,8 @@ interface RequestInterface extends ServerRequestInterface
     /**
      * Gets decoded JSON body safely.
      *
-     * @return array<string,mixed>|null Array of decoded JSON data or `null`` if
-     * invalid.
+     * @return array<int|string,mixed>|null Array of decoded JSON data (a JSON
+     * list has integer keys) or `null` if invalid.
      */
     public function json(): ?array;
 
@@ -107,7 +107,9 @@ interface RequestInterface extends ServerRequestInterface
      * Gets an uploaded file safely.
      *
      * @param string $key The file input name.
-     * @return UploadedFileInterface|null The file or null if not exists.
+     * @return UploadedFileInterface|null The file or null if there is no single
+     * file in that name: it does not exist or it is a group of files (a field
+     * `name[]`), which `files()` has.
      */
     public function file(string $key): ?UploadedFileInterface;
 
@@ -121,7 +123,9 @@ interface RequestInterface extends ServerRequestInterface
     /**
      * Gets all uploaded files.
      *
-     * @return array<string,UploadedFileInterface>
+     * @return array<int|string,mixed> The files by the name of the field, as PSR-7
+     * says: each is an `UploadedFileInterface` or, for a field with several
+     * files (`name[]`), a group of them.
      */
     public function files(): array;
 
@@ -188,6 +192,7 @@ interface RequestInterface extends ServerRequestInterface
      * Gets the user related to the request or null if not found.
      *
      * @return UserInterface|null
+     * @throws LogicException If the user of the request is not a `UserInterface`.
      */
     public function user(): ?UserInterface;
 }

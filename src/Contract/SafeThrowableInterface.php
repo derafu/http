@@ -55,7 +55,7 @@ interface SafeThrowableInterface extends Stringable, JsonSerializable
     /**
      * Gets the stack trace.
      *
-     * @return array<int,mixed>
+     * @return list<array{file?: string, line?: int, function?: string, class?: string, type?: string, args?: array<mixed>}>
      */
     public function getTrace(): array;
 

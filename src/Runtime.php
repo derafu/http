@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace Derafu\Http;
 
+use Derafu\Support\ArrayReader;
+use Derafu\Support\ArrayType;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UploadedFileInterface;
@@ -51,9 +53,11 @@ final class Runtime
         $psr17Factory = new Psr17Factory();
 
         // Extract headers from `$_SERVER`.
+        $server = ArrayReader::from($_SERVER);
         $headers = [];
-        foreach ($_SERVER as $key => $value) {
-            if (str_starts_with($key, 'HTTP_')) {
+        foreach (array_keys($_SERVER) as $key) {
+            $value = str_starts_with($key, 'HTTP_') ? $server->string($key) : null;
+            if ($value !== null) {
                 $headerName = str_replace('_', '-', strtolower(substr($key, 5)));
                 $headers[$headerName] = $value;
             }
@@ -64,8 +68,8 @@ final class Runtime
 
         // Create PSR-7 server request using the factory.
         $request = $psr17Factory->createServerRequest(
-            $_SERVER['REQUEST_METHOD'] ?? 'GET',
-            $_SERVER['REQUEST_URI'] ?? '/',
+            $server->string('REQUEST_METHOD') ?? 'GET',
+            $server->string('REQUEST_URI') ?? '/',
             $_SERVER
         );
 
@@ -127,7 +131,7 @@ final class Runtime
         $context['URL_METHOD'] = $context['REQUEST_METHOD'] ?? 'GET';
         $context['URL_URI'] = $context['REQUEST_URI'] ?? '/';
         $context['URL_QUERY'] = $context['QUERY_STRING'] ?? '';
-        $context['URL_SCHEME'] = (($context['HTTPS'] ?? false) || $context['SERVER_PORT'] == 443) ? 'https' : 'http';
+        $context['URL_SCHEME'] = (($context['HTTPS'] ?? false) || $context['URL_PORT'] == 443) ? 'https' : 'http';
 
         // Server information.
         $context['SCRIPT_NAME'] = $context['SCRIPT_NAME'] ?? '/index.php';
@@ -152,9 +156,9 @@ final class Runtime
     /**
      * Normalizes the PHP files array for PSR-7 uploaded files.
      *
-     * @param array $files The $_FILES superglobal.
+     * @param array<int|string,mixed> $files The $_FILES superglobal.
      * @param Psr17Factory $factory
-     * @return array Normalized array of UploadedFileInterface.
+     * @return array<int|string,mixed> Normalized array of UploadedFileInterface.
      */
     private static function normalizeFiles(array $files, Psr17Factory $factory): array
     {
@@ -174,13 +178,16 @@ final class Runtime
                     $normalized[$key] = static::normalizeFiles($restructured, $factory);
                 } else {
                     // Single file.
-                    if ($value['error'] === UPLOAD_ERR_OK && !empty($value['tmp_name'])) {
+                    $file = new ArrayReader($value, (string) $key);
+                    $error = $file->require('error', ArrayType::int());
+                    $tmpName = $file->require('tmp_name', ArrayType::string());
+                    if ($error === UPLOAD_ERR_OK && $tmpName !== '') {
                         $normalized[$key] = $factory->createUploadedFile(
-                            $factory->createStreamFromFile($value['tmp_name']),
-                            $value['size'],
-                            $value['error'],
-                            $value['name'],
-                            $value['type']
+                            $factory->createStreamFromFile($tmpName),
+                            $file->int('size'),
+                            $error,
+                            $file->string('name'),
+                            $file->string('type')
                         );
                     }
                 }
@@ -210,40 +217,17 @@ final class Runtime
      * So each leaf becomes a standard single-file array that normalizeFiles()
      * can process.
      *
-     * @param array $fileData A single entry from $_FILES with array tmp_name.
-     * @return array Restructured tree grouped by index/key.
+     * @param array<int|string,mixed> $fileData A single entry from $_FILES with array tmp_name.
+     * @return array<int|string,mixed> Restructured tree grouped by index/key.
      */
     private static function restructureNestedFiles(array $fileData): array
     {
         $result = [];
-        $keys = ['tmp_name', 'name', 'type', 'error', 'size'];
+        $reader = ArrayReader::from($fileData);
 
-        foreach ($fileData['tmp_name'] as $idx => $tmpName) {
-            if (is_array($tmpName)) {
-                // Nested: e.g. cafs[0][caf] → build sub-array per nested key.
-                $result[$idx] = [];
-                foreach ($tmpName as $nestedKey => $nestedTmpName) {
-                    if (is_array($nestedTmpName)) {
-                        // Even deeper nesting: recurse.
-                        $sub = [];
-                        foreach ($keys as $k) {
-                            $sub[$k] = $fileData[$k][$idx][$nestedKey];
-                        }
-                        $result[$idx][$nestedKey] = $sub;
-                    } else {
-                        // Leaf: single file at this level.
-                        $result[$idx][$nestedKey] = [];
-                        foreach ($keys as $k) {
-                            $result[$idx][$nestedKey][$k] = $fileData[$k][$idx][$nestedKey];
-                        }
-                    }
-                }
-            } else {
-                // Flat: e.g. cafs[0] → standard single-file structure.
-                $result[$idx] = [];
-                foreach ($keys as $k) {
-                    $result[$idx][$k] = $fileData[$k][$idx];
-                }
+        foreach (['tmp_name', 'name', 'type', 'error', 'size'] as $column) {
+            foreach ($reader->require($column, ArrayType::array()) as $idx => $value) {
+                $result[$idx][$column] = $value;
             }
         }
 

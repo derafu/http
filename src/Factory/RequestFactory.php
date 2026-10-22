@@ -28,10 +28,16 @@ class RequestFactory implements RequestFactoryInterface
     public function createFromPsrRequest(
         PsrRequestInterface $request
     ): RequestInterface {
+        // The name of a header that is only digits is an int key of the array.
+        $headers = [];
+        foreach ($request->getHeaders() as $name => $values) {
+            $headers[(string) $name] = array_values($values);
+        }
+
         $newRequest = new Request(
             $request->getMethod(),
             $request->getUri(),
-            $request->getHeaders(),
+            $headers,
             $request->getBody(),
             $request->getProtocolVersion(),
             $request->getServerParams()

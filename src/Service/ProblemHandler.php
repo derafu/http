@@ -17,10 +17,12 @@ use Derafu\Http\Contract\DispatcherInterface;
 use Derafu\Http\Contract\ProblemDetailInterface;
 use Derafu\Http\Contract\ProblemHandlerInterface;
 use Derafu\Http\Contract\ResponseInterface;
+use Derafu\Http\Contract\ResponseNormalizerInterface;
 use Derafu\Http\Enum\ContentType;
 use Derafu\Http\Response;
 use Derafu\Routing\ValueObject\Route;
 use Derafu\Routing\ValueObject\RouteMatch;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use Throwable;
 
@@ -65,13 +67,16 @@ class ProblemHandler implements ProblemHandlerInterface
      * handler of each status (`404`, `500`...) and the `default` one, that is
      * used for the statuses that have none. Without pages the errors in HTML
      * are sent as Markdown.
+     * @param ResponseNormalizerInterface $normalizer Turns what a page returns into a
+     * response, with the same rules as the controllers.
      * @throws InvalidArgumentException If a key is not a status (from 400 to
      * 599) or `default`, or a handler is not a string that is not empty or a
      * Closure: a configuration that is wrong is not ignored.
      */
     public function __construct(
         private readonly DispatcherInterface $dispatcher,
-        array $pages = []
+        array $pages = [],
+        private readonly ResponseNormalizerInterface $normalizer = new ResponseNormalizer()
     ) {
         $this->pages = $this->checkPages($pages);
     }
@@ -94,9 +99,7 @@ class ProblemHandler implements ProblemHandlerInterface
 
         // Add additional headers.
         foreach ($error->getHeaders() as $name => $value) {
-            if ($value !== null) {
-                $response = $response->withHeader($name, $value);
-            }
+            $response = $response->withHeader($name, $value);
         }
 
         // Return the response.
@@ -149,8 +152,9 @@ class ProblemHandler implements ProblemHandlerInterface
      * Renders a markdown text error message.
      *
      * @param ProblemDetailInterface $error
-     * @param array<string, Throwable> $failures The error pages that failed,
-     * by key. They are told only with debug on.
+     * @param array<int|string, Throwable> $failures The error pages that failed,
+     * by key (a status key, as every number that is a key of an array, is an
+     * int). They are told only with debug on.
      * @return ResponseInterface
      */
     private function renderMarkdownError(
@@ -195,14 +199,21 @@ class ProblemHandler implements ProblemHandlerInterface
             ['error' => $error]
         );
 
-        if (!$response instanceof ResponseInterface) {
-            return (new Response())
-                ->asHtml((string) $response)
-                ->withHttpStatus($error->getHttpStatus())
-            ;
+        if ($response instanceof ResponseInterface) {
+            return $response;
         }
 
-        return $response;
+        // The page of an error is HTML, whatever format the request has.
+        $normalized = $this->normalizer->normalize($request, $response, ContentType::HTML);
+
+        if (!$normalized instanceof ResponseInterface) {
+            throw new RuntimeException([
+                'The error page returned a response of type {type}, which is not a Derafu response.',
+                'type' => $normalized::class,
+            ]);
+        }
+
+        return $normalized->withHttpStatus($error->getHttpStatus());
     }
 
     /**

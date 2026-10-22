@@ -19,6 +19,7 @@ use Derafu\Http\Contract\RequestInterface;
 use Derafu\Http\Contract\SafeThrowableFactoryInterface;
 use Derafu\Http\Enum\HttpStatus;
 use Derafu\Http\Exception\DispatcherException;
+use Derafu\Http\Support\KernelParameters;
 use Derafu\Http\ValueObject\ProblemDetail;
 use Derafu\Routing\Exception\RouteNotFoundException;
 use Derafu\Translation\Contract\HeadersAwareInterface;
@@ -102,8 +103,8 @@ class ProblemFactory implements ProblemFactoryInterface
 
             // Environment info.
             timestamp: date('c'),
-            environment: $this->params->get('kernel.environment'),
-            debug: $this->params->get('kernel.debug'),
+            environment: KernelParameters::string($this->params, 'kernel.environment'),
+            debug: KernelParameters::bool($this->params, 'kernel.debug'),
         );
     }
 

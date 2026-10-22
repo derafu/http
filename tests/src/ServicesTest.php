@@ -96,10 +96,12 @@ final class ServicesTest extends TestCase
         };
         $middleware->process($request, $seen);
 
-        return [
-            (string) $seen->request?->getAttribute(ClientIpMiddleware::ATTRIBUTE),
-            (string) $seen->request?->getAttribute(ClientIpMiddleware::NETWORK_ATTRIBUTE),
-        ];
+        $client = $seen->request?->getAttribute(ClientIpMiddleware::ATTRIBUTE);
+        $network = $seen->request?->getAttribute(ClientIpMiddleware::NETWORK_ATTRIBUTE);
+        $this->assertIsString($client);
+        $this->assertIsString($network);
+
+        return [$client, $network];
     }
 
     #[Test]

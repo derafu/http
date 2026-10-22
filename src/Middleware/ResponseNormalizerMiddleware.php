@@ -14,15 +14,12 @@ namespace Derafu\Http\Middleware;
 
 use Derafu\Http\Contract\RequestInterface;
 use Derafu\Http\Contract\ResponseInterface;
-use Derafu\Http\Enum\ContentType;
-use Derafu\Http\Exception\ResponseSerializationException;
-use Derafu\Http\Response;
-use JsonException;
+use Derafu\Http\Contract\ResponseNormalizerInterface;
+use Derafu\Http\Service\ResponseNormalizer;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as PsrRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Stringable;
 
 /**
  * Normalizes responses to ensure PSR-7 compliance.
@@ -37,6 +34,11 @@ use Stringable;
  */
 class ResponseNormalizerMiddleware implements MiddlewareInterface
 {
+    public function __construct(
+        private readonly ResponseNormalizerInterface $normalizer = new ResponseNormalizer()
+    ) {
+    }
+
     /**
      * Processes an incoming server request.
      *
@@ -90,41 +92,6 @@ class ResponseNormalizerMiddleware implements MiddlewareInterface
         RequestInterface $request,
         mixed $response
     ): PsrResponseInterface {
-        // If it is already an answer, just check/add Content-Type.
-        if ($response instanceof ResponseInterface) {
-            if (!$response->hasHeader('Content-Type')) {
-                return $response->withContentType(
-                    $request->getPreferredContentType()
-                );
-            }
-            return $response;
-        }
-
-        // If it is already a PSR-7 response, just return it.
-        if ($response instanceof PsrResponseInterface) {
-            return $response;
-        }
-
-        // For other types, determine format and create response.
-        $format = $request->getPreferredContentType();
-        $newResponse = new Response();
-
-        if ($format === ContentType::JSON) {
-            try {
-                return $newResponse->asJson($response);
-            } catch (JsonException $e) {
-                if (is_string($response) || $response instanceof Stringable) {
-                    return $newResponse->asText((string) $response, ContentType::PLAIN);
-                }
-
-                throw new ResponseSerializationException([
-                    'Cannot fall back to plain text: response is of type {type}, not string (JSON encoding failed: {reason}).',
-                    'type' => get_debug_type($response),
-                    'reason' => $e->getMessage(),
-                ], previous: $e);
-            }
-        }
-
-        return $newResponse->asText($response, $format);
+        return $this->normalizer->normalize($request, $response);
     }
 }

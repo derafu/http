@@ -195,6 +195,19 @@ final class HttpExceptionsTest extends TestCase
         $this->assertSame(['Allow' => 'GET, POST'], $exception->getHeaders());
     }
 
+    /**
+     * @param class-string<HttpExceptionInterface&Throwable> $class
+     */
+    #[DataProvider('classesProvider')]
+    public function testAHeaderCanHaveSeveralValues(string $class): void
+    {
+        $exception = new $class();
+
+        $exception->setHeaders(['Link' => ['</a>; rel="next"', '</b>; rel="prev"']]);
+
+        $this->assertSame(['Link' => ['</a>; rel="next"', '</b>; rel="prev"']], $exception->getHeaders());
+    }
+
     public function testTheTooManyRequestsKeepsItsPageOfTheRfc(): void
     {
         $this->assertSame(

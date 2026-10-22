@@ -18,6 +18,7 @@ use Derafu\Http\Exception\ResponseSerializationException;
 use Derafu\Http\Middleware\DispatcherMiddleware;
 use Derafu\Http\Middleware\ResponseNormalizerMiddleware;
 use Derafu\Http\Response;
+use Derafu\Http\Service\ResponseNormalizer;
 use Nyholm\Psr7\Response as NyholmResponse;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -34,7 +35,11 @@ use Stringable;
  * `JsonException` for `normalizeResponse()` to handle.
  */
 #[CoversClass(ResponseNormalizerMiddleware::class)]
-#[UsesClass(ResponseSerializationException::class), UsesClass(ContentType::class), UsesClass(Response::class), UsesClass(DispatcherMiddleware::class)]
+#[CoversClass(ResponseNormalizer::class)]
+#[UsesClass(ResponseSerializationException::class)]
+#[UsesClass(ContentType::class)]
+#[UsesClass(Response::class)]
+#[UsesClass(DispatcherMiddleware::class)]
 class ResponseNormalizerMiddlewareTest extends TestCase
 {
     private const INVALID_UTF8 = "\xB1\x31";
@@ -47,7 +52,10 @@ class ResponseNormalizerMiddlewareTest extends TestCase
         $middleware = new ResponseNormalizerMiddleware();
         $method = new ReflectionMethod($middleware, 'normalizeResponse');
 
-        return $method->invoke($middleware, $request, $response);
+        $normalized = $method->invoke($middleware, $request, $response);
+        $this->assertInstanceOf(PsrResponseInterface::class, $normalized);
+
+        return $normalized;
     }
 
     public function testFallsBackToPlainTextWhenTheResponseIsAStringAndJsonEncodingFails(): void

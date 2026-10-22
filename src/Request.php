@@ -41,10 +41,10 @@ class Request implements RequestInterface
     /**
      * @param string $method HTTP method.
      * @param string|UriInterface $uri URI.
-     * @param array $headers Request headers.
+     * @param array<string,string|list<string>> $headers Request headers.
      * @param string|resource|StreamInterface|null $body Request body.
      * @param string $version Protocol version.
-     * @param array $serverParams Typically the $_SERVER superglobal.
+     * @param array<string,mixed> $serverParams Typically the $_SERVER superglobal.
      */
     public function __construct(
         string $method,
@@ -153,7 +153,9 @@ class Request implements RequestInterface
      */
     public function file(string $key): ?UploadedFileInterface
     {
-        return $this->getUploadedFiles()[$key] ?? null;
+        $file = $this->getUploadedFiles()[$key] ?? null;
+
+        return $file instanceof UploadedFileInterface ? $file : null;
     }
 
     /**
@@ -278,6 +280,8 @@ class Request implements RequestInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<int|string,mixed>
      */
     public function getServerParams(): array
     {
@@ -286,6 +290,8 @@ class Request implements RequestInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<int|string,mixed>
      */
     public function getCookieParams(): array
     {
@@ -294,16 +300,21 @@ class Request implements RequestInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @param array<int|string,mixed> $cookies
      */
     public function withCookieParams(array $cookies): static
     {
-        $this->psrRequest = $this->psrRequest->withCookieParams($cookies);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withCookieParams($cookies);
 
-        return $this;
+        return $new;
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<int|string,mixed>
      */
     public function getQueryParams(): array
     {
@@ -312,16 +323,21 @@ class Request implements RequestInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @param array<int|string,mixed> $query
      */
     public function withQueryParams(array $query): static
     {
-        $this->psrRequest = $this->psrRequest->withQueryParams($query);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withQueryParams($query);
 
-        return $this;
+        return $new;
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<int|string,mixed>
      */
     public function getUploadedFiles(): array
     {
@@ -330,16 +346,21 @@ class Request implements RequestInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @param array<int|string,mixed> $uploadedFiles
      */
     public function withUploadedFiles(array $uploadedFiles): static
     {
-        $this->psrRequest = $this->psrRequest->withUploadedFiles($uploadedFiles);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withUploadedFiles($uploadedFiles);
 
-        return $this;
+        return $new;
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<int|string,mixed>|object|null
      */
     public function getParsedBody()
     {
@@ -348,16 +369,21 @@ class Request implements RequestInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @param array<int|string,mixed>|object|null $data
      */
     public function withParsedBody($data): static
     {
-        $this->psrRequest = $this->psrRequest->withParsedBody($data);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withParsedBody($data);
 
-        return $this;
+        return $new;
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<string,mixed>
      */
     public function getAttributes(): array
     {
@@ -377,9 +403,10 @@ class Request implements RequestInterface
      */
     public function withAttribute($name, $value): static
     {
-        $this->psrRequest = $this->psrRequest->withAttribute($name, $value);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withAttribute($name, $value);
 
-        return $this;
+        return $new;
     }
 
     /**
@@ -387,9 +414,10 @@ class Request implements RequestInterface
      */
     public function withoutAttribute($name): static
     {
-        $this->psrRequest = $this->psrRequest->withoutAttribute($name);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withoutAttribute($name);
 
-        return $this;
+        return $new;
     }
 
     /**
@@ -405,9 +433,10 @@ class Request implements RequestInterface
      */
     public function withRequestTarget($requestTarget): static
     {
-        $this->psrRequest = $this->psrRequest->withRequestTarget($requestTarget);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withRequestTarget($requestTarget);
 
-        return $this;
+        return $new;
     }
 
     /**
@@ -423,9 +452,10 @@ class Request implements RequestInterface
      */
     public function withMethod($method): static
     {
-        $this->psrRequest = $this->psrRequest->withMethod($method);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withMethod($method);
 
-        return $this;
+        return $new;
     }
 
     /**
@@ -441,9 +471,10 @@ class Request implements RequestInterface
      */
     public function withUri($uri, $preserveHost = false): static
     {
-        $this->psrRequest = $this->psrRequest->withUri($uri, $preserveHost);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withUri($uri, $preserveHost);
 
-        return $this;
+        return $new;
     }
 
     /**
@@ -459,9 +490,10 @@ class Request implements RequestInterface
      */
     public function withProtocolVersion($version): static
     {
-        $this->psrRequest = $this->psrRequest->withProtocolVersion($version);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withProtocolVersion($version);
 
-        return $this;
+        return $new;
     }
 
     /**
@@ -501,9 +533,10 @@ class Request implements RequestInterface
      */
     public function withHeader($name, $value): static
     {
-        $this->psrRequest = $this->psrRequest->withHeader($name, $value);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withHeader($name, $value);
 
-        return $this;
+        return $new;
     }
 
     /**
@@ -511,9 +544,10 @@ class Request implements RequestInterface
      */
     public function withAddedHeader($name, $value): static
     {
-        $this->psrRequest = $this->psrRequest->withAddedHeader($name, $value);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withAddedHeader($name, $value);
 
-        return $this;
+        return $new;
     }
 
     /**
@@ -521,9 +555,10 @@ class Request implements RequestInterface
      */
     public function withoutHeader($name): static
     {
-        $this->psrRequest = $this->psrRequest->withoutHeader($name);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withoutHeader($name);
 
-        return $this;
+        return $new;
     }
 
     /**
@@ -539,9 +574,10 @@ class Request implements RequestInterface
      */
     public function withBody(StreamInterface $body): static
     {
-        $this->psrRequest = $this->psrRequest->withBody($body);
+        $new = clone $this;
+        $new->psrRequest = $this->psrRequest->withBody($body);
 
-        return $this;
+        return $new;
     }
 
     /**
@@ -597,6 +633,16 @@ class Request implements RequestInterface
      */
     public function user(): ?UserInterface
     {
-        return $this->psrRequest->getAttribute(UserInterface::class);
+        $user = $this->psrRequest->getAttribute(UserInterface::class);
+
+        if ($user !== null && !$user instanceof UserInterface) {
+            throw new LogicException([
+                'The user of the request must be an instance of {class}, {type} given.',
+                'class' => UserInterface::class,
+                'type' => get_debug_type($user),
+            ]);
+        }
+
+        return $user;
     }
 }

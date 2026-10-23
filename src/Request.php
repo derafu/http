@@ -273,6 +273,12 @@ class Request implements RequestInterface
             if (str_contains($type, 'text/plain')) {
                 return ContentType::PLAIN;
             }
+            if (str_contains($type, 'text/markdown')) {
+                return ContentType::MARKDOWN;
+            }
+            if (str_contains($type, 'application/pdf')) {
+                return ContentType::PDF;
+            }
         }
 
         return ContentType::HTML;

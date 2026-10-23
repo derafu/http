@@ -371,6 +371,14 @@ class HttpTest extends TestCase
         $this->assertStringStartsWith('text/markdown', $response->getHeaderLine('Content-Type'));
         $this->assertStringStartsWith('# An Error Occurred', (string) $response->getBody());
         $this->assertStringNotContainsString('Error pages that failed', (string) $response->getBody());
+        $this->assertStringContainsString('- Debug: `true`.', (string) $response->getBody());
+    }
+
+    public function testTheMarkdownOfTheErrorSaysThatDebugIsOffWhenItIs(): void
+    {
+        $response = $this->send('/page', accept: self::HTML);
+
+        $this->assertStringContainsString('- Debug: `false`.', (string) $response->getBody());
     }
 
     public function testWhenThePagesFailTheMarkdownSaysWhyOnlyInDebug(): void

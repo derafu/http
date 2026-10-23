@@ -203,7 +203,7 @@ class ProblemDetail implements ProblemDetailInterface
         $output .= "## Environment\n\n";
         $output .= "- Timestamp: `{$this->getTimestamp()}`.\n";
         $output .= "- Environment: `{$this->getEnvironment()}`.\n";
-        $output .= "- Debug: `{$this->isDebug()}`.\n\n";
+        $output .= "- Debug: `" . ($this->isDebug() ? 'true' : 'false') . "`.\n\n";
 
         if (!empty($this->context)) {
             $flags =

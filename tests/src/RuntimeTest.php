@@ -90,6 +90,50 @@ final class RuntimeTest extends TestCase
         unlink($tmp);
     }
 
+    public function testThePublicRuntimePreservesSparseUploadKeysAndLiteralFieldNames(): void
+    {
+        $tmp = $this->tmpFile('document');
+        $_SERVER = ['REQUEST_METHOD' => 'POST', 'REQUEST_URI' => '/upload'];
+        $_FILES = ['attachments' => [
+            'name' => [7 => ['front.page' => 'document.txt']],
+            'type' => [7 => ['front.page' => 'text/plain']],
+            'tmp_name' => [7 => ['front.page' => $tmp]],
+            'error' => [7 => ['front.page' => UPLOAD_ERR_OK]],
+            'size' => [7 => ['front.page' => 8]],
+        ]];
+        $handler = new class () implements RequestHandlerInterface {
+            public ?ServerRequestInterface $request = null;
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $this->request = $request;
+
+                return new Response(204);
+            }
+        };
+
+        ob_start();
+        try {
+            $this->assertSame(0, Runtime::run($handler));
+            $request = $handler->request;
+            $this->assertInstanceOf(ServerRequestInterface::class, $request);
+            $files = $request->getUploadedFiles();
+            $this->assertIsArray($files['attachments']);
+            $this->assertSame([7], array_keys($files['attachments']));
+            $this->assertIsArray($files['attachments'][7]);
+            $this->assertSame(['front.page'], array_keys($files['attachments'][7]));
+            $file = $files['attachments'][7]['front.page'];
+            $this->assertInstanceOf(UploadedFileInterface::class, $file);
+            $this->assertSame('document.txt', $file->getClientFilename());
+            $this->assertSame('text/plain', $file->getClientMediaType());
+            $this->assertSame(8, $file->getSize());
+            $this->assertSame('document', (string) $file->getStream());
+        } finally {
+            ob_end_clean();
+            unlink($tmp);
+        }
+    }
+
     public function testAFieldWithoutFileIsLeftOut(): void
     {
         $files = $this->normalize(['avatar' => [

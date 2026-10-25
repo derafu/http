@@ -26,6 +26,7 @@
     },
     "require": {
         "php": "^8.5",
+        "derafu/array": "dev-main",
         "derafu/kernel": "dev-main",
         "derafu/routing": "dev-main",
         "derafu/support": "dev-main",

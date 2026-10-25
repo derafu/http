@@ -12,9 +12,8 @@ declare(strict_types=1);
 
 namespace Derafu\Http\Middleware;
 
+use Derafu\Array\ArrayReader;
 use Derafu\Http\Response;
-use Derafu\Support\ArrayReader;
-use Derafu\Support\ArrayType;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Psr\Http\Message\ServerRequestInterface as PsrRequestInterface;
@@ -162,7 +161,7 @@ class CorsMiddleware implements MiddlewareInterface
     {
         $reader = new ArrayReader($rule, 'rules.' . $index);
 
-        $path = $reader->require('path', ArrayType::string());
+        $path = $reader->requireString('path');
         if (trim($path) === '') {
             throw new InvalidArgumentException([
                 'The CORS rule {index} must have a "path" that is not empty: the regular expression that is matched against the path.',
@@ -172,11 +171,11 @@ class CorsMiddleware implements MiddlewareInterface
 
         return [
             'path' => $path,
-            'allowedOrigins' => $reader->stringList('allowedOrigins') ?? self::DEFAULTS['allowedOrigins'],
-            'allowedMethods' => $reader->stringList('allowedMethods') ?? self::DEFAULTS['allowedMethods'],
-            'allowedHeaders' => $reader->stringList('allowedHeaders') ?? self::DEFAULTS['allowedHeaders'],
-            'allowCredentials' => $reader->bool('allowCredentials') ?? self::DEFAULTS['allowCredentials'],
-            'maxAge' => $reader->int('maxAge') ?? self::DEFAULTS['maxAge'],
+            'allowedOrigins' => $reader->getStringList('allowedOrigins') ?? self::DEFAULTS['allowedOrigins'],
+            'allowedMethods' => $reader->getStringList('allowedMethods') ?? self::DEFAULTS['allowedMethods'],
+            'allowedHeaders' => $reader->getStringList('allowedHeaders') ?? self::DEFAULTS['allowedHeaders'],
+            'allowCredentials' => $reader->getBool('allowCredentials') ?? self::DEFAULTS['allowCredentials'],
+            'maxAge' => $reader->getInt('maxAge') ?? self::DEFAULTS['maxAge'],
         ];
     }
 

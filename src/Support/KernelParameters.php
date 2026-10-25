@@ -12,8 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Http\Support;
 
-use Derafu\Support\ArrayReader;
-use Derafu\Support\ArrayType;
+use Derafu\Array\ArrayReader;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
@@ -31,7 +30,7 @@ final class KernelParameters
      */
     public static function string(ParameterBagInterface $params, string $name): string
     {
-        return self::reader($params, $name)->require($name, ArrayType::string());
+        return self::reader($params, $name)->requireString($name);
     }
 
     /**
@@ -41,7 +40,7 @@ final class KernelParameters
      */
     public static function bool(ParameterBagInterface $params, string $name): bool
     {
-        return self::reader($params, $name)->require($name, ArrayType::bool());
+        return self::reader($params, $name)->requireBool($name);
     }
 
     /**
@@ -52,7 +51,7 @@ final class KernelParameters
      */
     public static function array(ParameterBagInterface $params, string $name): array
     {
-        return self::reader($params, $name)->require($name, ArrayType::array());
+        return self::reader($params, $name)->requireArray($name);
     }
 
     /**
@@ -60,6 +59,6 @@ final class KernelParameters
      */
     private static function reader(ParameterBagInterface $params, string $name): ArrayReader
     {
-        return ArrayReader::from([$name => $params->get($name)]);
+        return ArrayReader::fromArray([$name => $params->get($name)]);
     }
 }

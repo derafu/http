@@ -17,6 +17,8 @@ use Derafu\Translation\Contract\TranslatableInterface;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use stdClass;
+use Symfony\Component\DependencyInjection\Exception\ParameterNotFoundException;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Throwable;
 
@@ -26,6 +28,34 @@ use Throwable;
 #[CoversClass(KernelParameters::class)]
 final class KernelParametersTest extends TestCase
 {
+    public function testParameterNamesRemainLiteralBagKeys(): void
+    {
+        $params = new ParameterBag([
+            'kernel.environment' => 'prod',
+            'kernel' => ['environment' => 'dev'],
+        ]);
+
+        $this->assertSame('prod', KernelParameters::string($params, 'kernel.environment'));
+    }
+
+    public function testMissingParameterKeepsTheBagsExceptionInsteadOfReadingANestedValue(): void
+    {
+        $params = new ParameterBag(['kernel' => ['environment' => 'dev']]);
+        $this->expectException(ParameterNotFoundException::class);
+
+        KernelParameters::string($params, 'kernel.environment');
+    }
+
+    public function testArrayParametersKeepSparseKeysAndObjectValues(): void
+    {
+        $object = new stdClass();
+        $values = [7 => 'first', 'nested' => [3 => $object], 2 => null];
+        $params = new ParameterBag(['application.values' => $values]);
+
+        $this->assertSame($values, KernelParameters::array($params, 'application.values'));
+        $this->assertSame($object, KernelParameters::array($params, 'application.values')['nested'][3]);
+    }
+
     public function testAStringParameterIsGiven(): void
     {
         $params = new ParameterBag(['kernel.environment' => 'prod']);

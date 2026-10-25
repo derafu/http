@@ -12,8 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Http;
 
-use Derafu\Support\ArrayReader;
-use Derafu\Support\ArrayType;
+use Derafu\Array\ArrayReader;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UploadedFileInterface;
@@ -53,10 +52,10 @@ final class Runtime
         $psr17Factory = new Psr17Factory();
 
         // Extract headers from `$_SERVER`.
-        $server = ArrayReader::from($_SERVER);
+        $server = ArrayReader::fromArray($_SERVER);
         $headers = [];
         foreach (array_keys($_SERVER) as $key) {
-            $value = str_starts_with($key, 'HTTP_') ? $server->string($key) : null;
+            $value = str_starts_with($key, 'HTTP_') ? $server->getString($key) : null;
             if ($value !== null) {
                 $headerName = str_replace('_', '-', strtolower(substr($key, 5)));
                 $headers[$headerName] = $value;
@@ -68,8 +67,8 @@ final class Runtime
 
         // Create PSR-7 server request using the factory.
         $request = $psr17Factory->createServerRequest(
-            $server->string('REQUEST_METHOD') ?? 'GET',
-            $server->string('REQUEST_URI') ?? '/',
+            $server->getString('REQUEST_METHOD') ?? 'GET',
+            $server->getString('REQUEST_URI') ?? '/',
             $_SERVER
         );
 
@@ -179,15 +178,15 @@ final class Runtime
                 } else {
                     // Single file.
                     $file = new ArrayReader($value, (string) $key);
-                    $error = $file->require('error', ArrayType::int());
-                    $tmpName = $file->require('tmp_name', ArrayType::string());
+                    $error = $file->requireInt('error');
+                    $tmpName = $file->requireString('tmp_name');
                     if ($error === UPLOAD_ERR_OK && $tmpName !== '') {
                         $normalized[$key] = $factory->createUploadedFile(
                             $factory->createStreamFromFile($tmpName),
-                            $file->int('size'),
+                            $file->getInt('size'),
                             $error,
-                            $file->string('name'),
-                            $file->string('type')
+                            $file->getString('name'),
+                            $file->getString('type')
                         );
                     }
                 }
@@ -223,10 +222,10 @@ final class Runtime
     private static function restructureNestedFiles(array $fileData): array
     {
         $result = [];
-        $reader = ArrayReader::from($fileData);
+        $reader = ArrayReader::fromArray($fileData);
 
         foreach (['tmp_name', 'name', 'type', 'error', 'size'] as $column) {
-            foreach ($reader->require($column, ArrayType::array()) as $idx => $value) {
+            foreach ($reader->requireArray($column) as $idx => $value) {
                 $result[$idx][$column] = $value;
             }
         }

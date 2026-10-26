@@ -15,10 +15,12 @@ namespace Derafu\TestsHttp\Middleware;
 use Derafu\Http\Middleware\RouterMiddleware;
 use Derafu\Routing\Contract\RouteMatchInterface;
 use Derafu\Routing\Exception\InvalidPathException;
+use Derafu\Routing\Exception\MethodNotAllowedException;
 use Derafu\Routing\Exception\RouteNotFoundException;
 use Derafu\Routing\Parser\DynamicParser;
 use Derafu\Routing\Parser\StaticParser;
 use Derafu\Routing\Router;
+use LogicException;
 use Nyholm\Psr7\Response;
 use Nyholm\Psr7\ServerRequest;
 use Nyholm\Psr7\Uri;
@@ -233,5 +235,60 @@ class RouterMiddlewareTest extends TestCase
                 }
             }
         );
+    }
+
+    public function testThePsrRequestMethodIsUsedInsteadOfTheServerGlobal(): void
+    {
+        $server = $_SERVER;
+        try {
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $router = new Router(parsers: [new StaticParser()]);
+            $router->addRoute('read', '/products', 'ProductController@index', methods: ['GET']);
+            $router->addRoute('create', '/products', 'ProductController@create', methods: ['POST']);
+            $handler = new class () implements RequestHandlerInterface {
+                public ?ServerRequestInterface $request = null;
+
+                public function handle(ServerRequestInterface $request): ResponseInterface
+                {
+                    $this->request = $request;
+                    return new Response();
+                }
+            };
+            (new RouterMiddleware($router))->process(
+                new ServerRequest('POST', 'https://example.com/products'),
+                $handler,
+            );
+            $this->assertNotNull($handler->request);
+            $route = $handler->request->getAttribute(RouterMiddleware::ROUTE_ATTRIBUTE);
+            $this->assertInstanceOf(RouteMatchInterface::class, $route);
+            $this->assertSame('create', $route->getName());
+            $this->assertSame('POST', $handler->request->getMethod());
+            $this->assertSame('POST', $router->getContext()?->getMethod());
+        } finally {
+            $_SERVER = $server;
+        }
+    }
+
+    public function testTheServerGlobalCannotMakeAnInvalidRequestMethodAcceptable(): void
+    {
+        $server = $_SERVER;
+        try {
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $router = new Router(parsers: [new StaticParser()]);
+            $router->addRoute('create', '/products', 'ProductController@create', methods: ['POST']);
+            $handler = new class () implements RequestHandlerInterface {
+                public function handle(ServerRequestInterface $request): ResponseInterface
+                {
+                    throw new LogicException('The request must be rejected before dispatch.');
+                }
+            };
+            $this->expectException(MethodNotAllowedException::class);
+            (new RouterMiddleware($router))->process(
+                new ServerRequest('GET', 'https://example.com/products'),
+                $handler,
+            );
+        } finally {
+            $_SERVER = $server;
+        }
     }
 }

@@ -78,7 +78,7 @@ class RouterMiddleware implements MiddlewareInterface
         $this->router->setContext($context);
 
         // Match route for the request path.
-        $route = $this->router->match($canonical);
+        $route = $this->router->match($canonical, $request->getMethod());
 
         // Store route and continue.
         return $handler->handle(

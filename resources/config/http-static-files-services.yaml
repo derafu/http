@@ -1,0 +1,15 @@
+# Opt-in static files. Set derafu.http.static_files.directory in the application.
+# The directory is required; HTTP does not assume a project layout.
+imports:
+    - { resource: 'http-services.yaml' }
+
+parameters:
+    derafu.http.static_files.cache_max_age: 86400
+
+services:
+    Derafu\Http\Middleware\StaticFilesMiddleware:
+        arguments:
+            $directory: '%derafu.http.static_files.directory%'
+            $cacheMaxAge: '%derafu.http.static_files.cache_max_age%'
+        tags:
+            - { name: derafu_http.middleware, priority: 1000 }

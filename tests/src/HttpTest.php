@@ -145,10 +145,12 @@ class HttpTest extends TestCase
         $handler = new RequestHandler(
             new ProblemFactory($params, new SafeThrowableFactory($params)),
             $problemHandler,
-            new RequestFactoryMiddleware(new RequestFactory(), $params),
-            new RouterMiddleware($router),
-            new DispatcherMiddleware($dispatcher),
-            new ResponseNormalizerMiddleware(),
+            [
+                new RequestFactoryMiddleware(new RequestFactory(), $params),
+                new RouterMiddleware($router),
+                new DispatcherMiddleware($dispatcher),
+                new ResponseNormalizerMiddleware(),
+            ],
         );
 
         $request = new ServerRequest(

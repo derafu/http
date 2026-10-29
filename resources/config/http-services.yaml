@@ -4,15 +4,19 @@
 #   imports:
 #       - { resource: '../vendor/derafu/http/resources/config/http-services.yaml' }
 #
-# It has what is the same in every app. What depends on the app stays in the
-# app: the list (and the order) of the middlewares that the request handler
-# runs (`Psr\Http\Server\RequestHandlerInterface`), the directory of the static
-# files (`StaticFilesMiddleware`) and the services of the other packages, like
-# the router.
+# Shared standalone HTTP composition. The kernel supplies its parameter bag
+# and invoker; applications contribute routes and middleware, without rebuilding
+# the handler. Higher derafu_http.middleware priorities execute first:
+# request conversion 900, client identity 800, routing 600, dispatch 200,
+# response normalization 100. Session/authentication middleware belongs between
+# routing and dispatch. CORS and throttling are never enabled implicitly.
 #
-# Who the client of a request is (`ClientIpMiddleware`) is configured with the
-# environment variables HTTP_TRUSTED_PROXIES, HTTP_CLIENT_IP_HEADERS,
-# HTTP_CLIENT_NETWORK_IPV4_PREFIX and HTTP_CLIENT_NETWORK_IPV6_PREFIX.
+# Import http-static-files-services.yaml to serve an application-owned directory.
+# Twig's app variable uses the same request stack as dispatch.
+
+imports:
+    - { resource: '../../../routing/resources/config/routing-services.yaml' }
+    - { resource: '../../../renderer/resources/config/renderer-services.yaml' }
 
 parameters:
     # The pages of the errors in HTML (see ProblemHandler): the handler of each
@@ -20,7 +24,7 @@ parameters:
     # handler is the path of a template or a `Controller::action`; the problem
     # is passed to it as `context.error`. Without pages the errors in HTML are
     # sent as Markdown. They are not routes: a page of an error is not a URL.
-    http.error_pages: []
+    derafu.http.error_pages: []
     # Who the client of a request is (see ClientIpMiddleware). The proxies that
     # the application trusts, separated by commas: addresses, ranges (CIDR) and
     # the shortcuts `loopback`, `private` and `link-local`. By default there are
@@ -41,23 +45,45 @@ services:
         autoconfigure: true
         public: false
 
-    Derafu\Http\Middleware\RequestFactoryMiddleware: ~
+    Psr\Http\Server\RequestHandlerInterface:
+        class: Derafu\Http\Service\RequestHandler
+        public: true
+        arguments:
+            $problemFactory: '@Derafu\Http\Contract\ProblemFactoryInterface'
+            $problemHandler: '@Derafu\Http\Contract\ProblemHandlerInterface'
+            $middlewares: !tagged_iterator derafu_http.middleware
+
+    Derafu\Http\Middleware\RequestFactoryMiddleware:
+        tags:
+            - { name: derafu_http.middleware, priority: 900 }
 
     # The requests that are being dispatched and the `app` variable of the
-    # templates (an app adds the extension to the Twig ones of its renderer).
+    # templates, contributed to the shared Twig environment.
     Derafu\Http\Contract\RequestStackInterface:
         class: Derafu\Http\Service\RequestStack
     Derafu\Http\Twig\AppVariable: ~
-    Derafu\Http\Twig\AppExtension: ~
+    Derafu\Http\Bridge\Twig\HttpExtensionProvider:
+        arguments:
+            $app: '@Derafu\Http\Twig\AppVariable'
+        tags: ['derafu_twig.extension_provider']
+
     Derafu\Http\Middleware\ClientIpMiddleware:
+        tags:
+            - { name: derafu_http.middleware, priority: 800 }
         arguments:
             $trustedProxies: '%env(csv:HTTP_TRUSTED_PROXIES)%'
             $headers: '%env(csv:HTTP_CLIENT_IP_HEADERS)%'
             $ipv4Prefix: '%env(int:HTTP_CLIENT_NETWORK_IPV4_PREFIX)%'
             $ipv6Prefix: '%env(int:HTTP_CLIENT_NETWORK_IPV6_PREFIX)%'
-    Derafu\Http\Middleware\RouterMiddleware: ~
-    Derafu\Http\Middleware\DispatcherMiddleware: ~
-    Derafu\Http\Middleware\ResponseNormalizerMiddleware: ~
+    Derafu\Http\Middleware\RouterMiddleware:
+        tags:
+            - { name: derafu_http.middleware, priority: 600 }
+    Derafu\Http\Middleware\DispatcherMiddleware:
+        tags:
+            - { name: derafu_http.middleware, priority: 200 }
+    Derafu\Http\Middleware\ResponseNormalizerMiddleware:
+        tags:
+            - { name: derafu_http.middleware, priority: 100 }
 
     Derafu\Http\Contract\RequestFactoryInterface:
         class: Derafu\Http\Factory\RequestFactory
@@ -72,7 +98,7 @@ services:
         class: Derafu\Http\Service\ProblemHandler
         lazy: true
         arguments:
-            $pages: '%http.error_pages%'
+            $pages: '%derafu.http.error_pages%'
 
     Derafu\Http\Contract\ProblemFactoryInterface:
         class: Derafu\Http\Factory\ProblemFactory

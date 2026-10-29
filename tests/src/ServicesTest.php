@@ -12,32 +12,17 @@ declare(strict_types=1);
 
 namespace Derafu\TestsHttp;
 
+use Composer\InstalledVersions;
 use Derafu\Http\Contract\ProblemFactoryInterface;
 use Derafu\Http\Contract\ProblemHandlerInterface;
 use Derafu\Http\Contract\RequestStackInterface;
 use Derafu\Http\Exception\NotFoundException;
 use Derafu\Http\Middleware\ClientIpMiddleware;
-use Derafu\Http\Middleware\DispatcherMiddleware;
-use Derafu\Http\Middleware\RequestFactoryMiddleware;
-use Derafu\Http\Middleware\ResponseNormalizerMiddleware;
-use Derafu\Http\Middleware\RouterMiddleware;
 use Derafu\Http\Request;
 use Derafu\Http\Service\ProblemHandler;
-use Derafu\Http\Service\RequestHandler;
 use Derafu\Http\Translation\HttpTranslationResourceProvider;
-use Derafu\Http\Twig\AppExtension;
 use Derafu\Http\Twig\AppVariable;
-use Derafu\Renderer\Contract\RendererInterface;
-use Derafu\Renderer\Factory\RendererFactory;
-use Derafu\Routing\Contract\RouterInterface;
-use Derafu\Routing\Parser\DynamicParser;
-use Derafu\Routing\Parser\StaticParser;
-use Derafu\Routing\Router;
-use Derafu\TestsHttp\Fixture\Controller\HomeController;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
-use Derafu\Translation\TranslatorFactory;
-use Invoker\Invoker;
-use Invoker\InvokerInterface;
 use Nyholm\Psr7\Response;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -46,17 +31,11 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use RuntimeException;
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
-use Symfony\Component\DependencyInjection\ParameterBag\ContainerBag;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\Translation\Translator;
 use Symfony\Component\VarExporter\LazyObjectInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * What an application gets by importing the file of the package, and how the
@@ -233,49 +212,17 @@ final class ServicesTest extends TestCase
     {
         $root = dirname(__DIR__, 2);
         $container = new ContainerBuilder();
-        (new YamlFileLoader($container, new FileLocator($root . '/resources/config')))
-            ->load('http-services.yaml');
         $container->setParameter('kernel.project_dir', $root);
-        $container->setParameter('kernel.environment', 'test');
-        $container->setParameter('kernel.debug', false);
-        $container->setParameter('kernel.context', []);
-        if ($pages !== null) {
-            $container->setParameter('http.error_pages', $pages);
+        $directories = [$root . '/tests/fixtures/config'];
+        foreach (['derafu/routing', 'derafu/renderer'] as $package) {
+            $directories[] = (InstalledVersions::getInstallPath($package)
+                ?? throw new RuntimeException($package . ' must be installed for these tests.')) . '/resources/config';
         }
-        $container->register(ParameterBagInterface::class, ContainerBag::class)
-            ->setArguments([new Reference('service_container')]);
-        $container->register(InvokerInterface::class, Invoker::class)
-            ->setArguments([null, new Reference('service_container')]);
-        $container->register(TranslatorInterface::class, Translator::class)
-            ->setFactory([TranslatorFactory::class, 'create'])
-            ->setArguments(['es', ['en'], new TaggedIteratorArgument('derafu_translation.resource_provider')]);
-        $container->register(RendererInterface::class)
-            ->setFactory([RendererFactory::class, 'create'])
-            ->setArguments([[
-                'engines' => ['twig'],
-                'extra' => false,
-                'paths' => [$root . '/tests/fixtures/services'],
-                'extensions' => [new Reference(AppExtension::class)],
-            ]]);
-        $container->register(RouterInterface::class, Router::class)
-            ->setArguments([
-                [new Definition(StaticParser::class), new Definition(DynamicParser::class)],
-                [
-                    'home' => ['path' => '/', 'handler' => HomeController::class . '::index'],
-                    'page' => ['path' => '/page', 'handler' => $root . '/tests/fixtures/services/page.html.twig'],
-                ],
-            ]);
-        $container->register(HomeController::class);
-        $container->register(RequestHandlerInterface::class, RequestHandler::class)
-            ->setArguments([
-                new Reference(ProblemFactoryInterface::class),
-                new Reference(ProblemHandlerInterface::class),
-                new Reference(RequestFactoryMiddleware::class),
-                new Reference(ClientIpMiddleware::class),
-                new Reference(RouterMiddleware::class),
-                new Reference(DispatcherMiddleware::class),
-                new Reference(ResponseNormalizerMiddleware::class),
-            ]);
+        (new YamlFileLoader($container, new FileLocator($directories)))
+            ->load('services.yaml');
+        if ($pages !== null) {
+            $container->setParameter('derafu.http.error_pages', $pages);
+        }
         // Keep every declaration reachable, including intentionally lazy ones.
         foreach ($container->getDefinitions() as $definition) {
             $definition->setPublic(true);

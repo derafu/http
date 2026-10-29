@@ -1,0 +1,3 @@
+imports:
+    - { resource: '../../../resources/config/http-static-files-services.yaml' }
+    - { resource: 'contributions.yaml' }

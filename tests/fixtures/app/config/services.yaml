@@ -4,34 +4,15 @@
 imports:
     - { resource: '../../../../resources/config/http-services.yaml' }
 
+parameters:
+    derafu.routing.routes: '%routes%'
+
 services:
 
     _defaults:
         autowire: true
         autoconfigure: true
         public: false
-
-    Psr\Http\Server\RequestHandlerInterface:
-        class: Derafu\Http\Service\RequestHandler
-        public: true
-        arguments:
-            $middlewares:
-                - '@Derafu\Http\Middleware\RequestFactoryMiddleware'
-                - '@Derafu\Http\Middleware\RouterMiddleware'
-                - '@Derafu\Http\Middleware\DispatcherMiddleware'
-                - '@Derafu\Http\Middleware\ResponseNormalizerMiddleware'
-
-    Derafu\Routing\Contract\RouterInterface:
-        class: Derafu\Routing\Router
-        arguments:
-            $parsers:
-                - '@Derafu\Routing\Parser\StaticParser'
-                - '@Derafu\Routing\Parser\DynamicParser'
-            $routes: '%routes%'
-
-    Derafu\Routing\Parser\StaticParser: ~
-
-    Derafu\Routing\Parser\DynamicParser: ~
 
     # No route of this application has a template.
     Derafu\Renderer\Contract\RendererInterface:

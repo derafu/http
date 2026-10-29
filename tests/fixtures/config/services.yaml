@@ -1,0 +1,48 @@
+imports:
+    - { resource: '../../../resources/config/http-services.yaml' }
+
+parameters:
+    kernel.environment: test
+    kernel.debug: false
+    kernel.context: []
+    derafu.twig.options:
+        extra: false
+    derafu.routing.routes:
+        home:
+            path: /
+            handler: 'Derafu\TestsHttp\Fixture\Controller\HomeController::index'
+        page:
+            path: /page
+            handler: '%kernel.project_dir%/tests/fixtures/services/page.html.twig'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    # Infrastructure supplied by the HTTP kernel in a real application.
+    Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface:
+        class: Symfony\Component\DependencyInjection\ParameterBag\ContainerBag
+        arguments: ['@service_container']
+
+    Derafu\Http\Factory\InvokerFactory: ~
+
+    Invoker\InvokerInterface:
+        factory: ['@Derafu\Http\Factory\InvokerFactory', create]
+        arguments:
+            $container: '@service_container'
+
+    Symfony\Contracts\Translation\TranslatorInterface:
+        class: Symfony\Component\Translation\Translator
+        factory: ['Derafu\Translation\TranslatorFactory', create]
+        arguments:
+            $defaultLocale: es
+            $fallbackLocales: [en]
+            $resourceProviders: !tagged_iterator derafu_translation.resource_provider
+
+    Derafu\TestsHttp\Fixture\ServiceTemplatePathProvider:
+        tags: ['derafu_twig.template_path_provider']
+
+    Derafu\TestsHttp\Fixture\Controller\HomeController:
+        public: true

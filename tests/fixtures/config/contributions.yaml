@@ -1,0 +1,25 @@
+imports:
+    - { resource: 'services.yaml' }
+
+services:
+    # Two collection members of the same implementation, at different positions.
+    Psr\Http\Server\MiddlewareInterface $before_routing:
+        class: Derafu\TestsHttp\Fixture\ContextMiddleware
+        arguments:
+            $phase: Before
+        tags:
+            - { name: derafu_http.middleware, priority: 700 }
+
+    Psr\Http\Server\MiddlewareInterface $after_routing:
+        class: Derafu\TestsHttp\Fixture\ContextMiddleware
+        arguments:
+            $phase: After
+        tags:
+            - { name: derafu_http.middleware, priority: 400 }
+
+    test.requests:
+        alias: Derafu\Http\Contract\RequestStackInterface
+        public: true
+    test.app:
+        alias: Derafu\Http\Twig\AppVariable
+        public: true

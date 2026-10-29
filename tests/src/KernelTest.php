@@ -20,6 +20,7 @@ use Derafu\Http\Factory\ProblemFactory;
 use Derafu\Http\Factory\RequestFactory;
 use Derafu\Http\Factory\SafeThrowableFactory;
 use Derafu\Http\Kernel;
+use Derafu\Http\Middleware\ClientIpMiddleware;
 use Derafu\Http\Middleware\DispatcherMiddleware;
 use Derafu\Http\Middleware\RequestFactoryMiddleware;
 use Derafu\Http\Middleware\ResponseNormalizerMiddleware;
@@ -35,6 +36,7 @@ use Derafu\Http\Support\KernelParameters;
 use Derafu\Http\ValueObject\ProblemDetail;
 use Derafu\Http\ValueObject\SafeThrowable;
 use Derafu\Kernel\Environment;
+use Derafu\TestsHttp\Fixture\ApplicationKernel;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -60,6 +62,7 @@ use SplFileInfo;
 #[UsesClass(ProblemFactory::class)]
 #[UsesClass(RequestFactory::class)]
 #[UsesClass(SafeThrowableFactory::class)]
+#[UsesClass(ClientIpMiddleware::class)]
 #[UsesClass(DispatcherMiddleware::class)]
 #[UsesClass(RequestFactoryMiddleware::class)]
 #[UsesClass(ResponseNormalizerMiddleware::class)]
@@ -107,7 +110,7 @@ final class KernelTest extends TestCase
             'cache' => $this->cache,
         ]);
 
-        return new Kernel($environment, true, uniqid('http_'));
+        return new ApplicationKernel($environment, true, uniqid('http_'));
     }
 
     private function send(Kernel $kernel, string $path, string $accept = 'text/html'): ResponseInterface

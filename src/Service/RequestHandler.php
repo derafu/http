@@ -34,7 +34,7 @@ use Throwable;
 class RequestHandler implements RequestHandlerInterface
 {
     /**
-     * @var MiddlewareInterface[]
+     * @var list<MiddlewareInterface>
      */
     private array $middlewares = [];
 
@@ -54,15 +54,25 @@ class RequestHandler implements RequestHandlerInterface
      *
      * @param ProblemFactoryInterface $problemFactory
      * @param ProblemHandlerInterface $problemHandler
-     * @param MiddlewareInterface ...$middlewares Optional initial middleware
-     * stack.
+     * @param iterable<array-key, MiddlewareInterface> $middlewares Initial stack in execution order.
+     * Collection keys do not determine execution order.
      */
     public function __construct(
         private readonly ProblemFactoryInterface $problemFactory,
         private readonly ProblemHandlerInterface $problemHandler,
-        MiddlewareInterface ...$middlewares
+        iterable $middlewares = []
     ) {
-        $this->middlewares = $middlewares;
+        foreach ($middlewares as $middleware) {
+            $this->addMiddleware($middleware);
+        }
+    }
+
+    /**
+     * Append one middleware, retaining the constructor's strict element type.
+     */
+    private function addMiddleware(MiddlewareInterface $middleware): void
+    {
+        $this->middlewares[] = $middleware;
     }
 
     /**

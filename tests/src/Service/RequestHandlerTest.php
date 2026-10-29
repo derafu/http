@@ -87,8 +87,7 @@ final class RequestHandlerTest extends TestCase
         $handler = new RequestHandler(
             $this->createStub(ProblemFactoryInterface::class),
             $this->createStub(ProblemHandlerInterface::class),
-            $first,
-            $last
+            [$first, $last]
         );
         $request = new Request('GET', 'http://localhost/');
 

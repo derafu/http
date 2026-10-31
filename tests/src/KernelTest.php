@@ -22,6 +22,7 @@ use Derafu\Http\Factory\SafeThrowableFactory;
 use Derafu\Http\Kernel;
 use Derafu\Http\Middleware\ClientIpMiddleware;
 use Derafu\Http\Middleware\DispatcherMiddleware;
+use Derafu\Http\Middleware\RangeMiddleware;
 use Derafu\Http\Middleware\RequestFactoryMiddleware;
 use Derafu\Http\Middleware\ResponseNormalizerMiddleware;
 use Derafu\Http\Middleware\RouterMiddleware;
@@ -64,6 +65,7 @@ use SplFileInfo;
 #[UsesClass(SafeThrowableFactory::class)]
 #[UsesClass(ClientIpMiddleware::class)]
 #[UsesClass(DispatcherMiddleware::class)]
+#[UsesClass(RangeMiddleware::class)]
 #[UsesClass(RequestFactoryMiddleware::class)]
 #[UsesClass(ResponseNormalizerMiddleware::class)]
 #[UsesClass(RouterMiddleware::class)]

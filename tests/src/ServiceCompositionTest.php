@@ -15,9 +15,11 @@ namespace Derafu\TestsHttp;
 use Composer\InstalledVersions;
 use Derafu\Http\Contract\RequestStackInterface;
 use Derafu\Http\Twig\AppVariable;
+use Derafu\TestsHttp\Fixture\Controller\DownloadController;
 use Nyholm\Psr7\ServerRequest;
 use PHPUnit\Framework\Attributes\CoversNamespace;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use RuntimeException;
 use Symfony\Component\Config\FileLocator;
@@ -128,5 +130,68 @@ final class ServiceCompositionTest extends TestCase
         $dynamic = $handler->handle($this->request('/'));
         $this->assertSame('home', (string) $dynamic->getBody());
         $this->assertSame('home', $dynamic->getHeaderLine('X-After-Route'));
+    }
+
+    /**
+     * @param array<string, string> $headers
+     */
+    private function download(array $headers, string $path = '/download', string $config = 'contributions.yaml'): ResponseInterface
+    {
+        $request = $this->request($path);
+        foreach ($headers as $name => $value) {
+            $request = $request->withHeader($name, $value);
+        }
+
+        return $this->handler($this->container($config))->handle($request);
+    }
+
+    public function testADownloadOfARouteIsServedWholeThroughTheRealPipeline(): void
+    {
+        $response = $this->download([]);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(DownloadController::CONTENT, (string) $response->getBody());
+        $this->assertSame('10', $response->getHeaderLine('Content-Length'));
+        $this->assertSame('bytes', $response->getHeaderLine('Accept-Ranges'));
+        $this->assertSame('attachment; filename="data.txt"', $response->getHeaderLine('Content-Disposition'));
+        $this->assertSame('text/plain; charset=UTF-8', $response->getHeaderLine('Content-Type'));
+    }
+
+    public function testADownloadOfARouteIsServedByRangeThroughTheRealPipeline(): void
+    {
+        $response = $this->download(['Range' => 'bytes=2-5']);
+
+        $this->assertSame(206, $response->getStatusCode());
+        $this->assertSame('2345', (string) $response->getBody());
+        $this->assertSame('bytes 2-5/10', $response->getHeaderLine('Content-Range'));
+        $this->assertSame('4', $response->getHeaderLine('Content-Length'));
+        $this->assertSame('attachment; filename="data.txt"', $response->getHeaderLine('Content-Disposition'));
+    }
+
+    public function testARangeOutsideOfTheDownloadIsRefusedThroughTheRealPipeline(): void
+    {
+        $response = $this->download(['Range' => 'bytes=50-']);
+
+        $this->assertSame(416, $response->getStatusCode());
+        $this->assertSame('bytes */10', $response->getHeaderLine('Content-Range'));
+    }
+
+    public function testAStaticFileIsServedByRangeThroughTheRealPipeline(): void
+    {
+        $response = $this->download(['Range' => 'bytes=0-3'], '/site.css', 'static-services.yaml');
+
+        $this->assertSame(206, $response->getStatusCode());
+        $this->assertSame('body', (string) $response->getBody());
+        $this->assertSame('bytes 0-3/16', $response->getHeaderLine('Content-Range'));
+        $this->assertFalse($response->hasHeader('X-Before-Request'));
+    }
+
+    public function testAResponseThatIsNotAFileIsNotChangedByARange(): void
+    {
+        $response = $this->download(['Range' => 'bytes=1-2'], '/');
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('home', (string) $response->getBody());
+        $this->assertFalse($response->hasHeader('Content-Range'));
     }
 }

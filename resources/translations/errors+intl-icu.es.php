@@ -109,6 +109,26 @@ return [
     'The handler of the error page "{key}" is not valid: it must be a text that is not empty or a Closure.' =>
         'El manejador de la página de error "{key}" no es válido: debe ser un texto que no esté vacío o un Closure.',
 
+    // Downloads.
+    'A file can only be deleted after it is sent when the source is a file, {type} given.' =>
+        'Un archivo solo se puede borrar después de enviarlo cuando la fuente es un archivo, se dio {type}.',
+    'The file "{path}" could not be deleted.' =>
+        'No se pudo borrar el archivo "{path}".',
+    'The file "{path}" does not exist or cannot be read.' =>
+        'El archivo "{path}" no existe o no se puede leer.',
+    'The source of a download must be a string, a stream, a resource or a file, {type} given.' =>
+        'La fuente de una descarga debe ser un texto, un stream, un recurso o un archivo, se dio {type}.',
+    'The window of a stream must not have a negative offset or length.' =>
+        'La ventana de un stream no puede tener un desplazamiento o un largo negativo.',
+    'The stream of a window must be seekable and readable.' =>
+        'El stream de una ventana debe poder moverse y leerse.',
+    'The seek mode {whence} is not valid.' =>
+        'El modo de desplazamiento {whence} no es válido.',
+    'Cannot seek to the position {position} of the window.' =>
+        'No se puede ir a la posición {position} de la ventana.',
+    'The window of a stream is read-only.' =>
+        'La ventana de un stream es de solo lectura.',
+
     // CORS.
     'The CORS rule {index} must have a "path" that is not empty: the regular expression that is matched against the path.' =>
         'La regla CORS {index} debe tener un "path" que no esté vacío: la expresión regular que se compara con la ruta.',

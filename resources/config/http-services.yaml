@@ -53,6 +53,10 @@ services:
             $problemHandler: '@Derafu\Http\Contract\ProblemHandlerInterface'
             $middlewares: !tagged_iterator derafu_http.middleware
 
+    Derafu\Http\Middleware\RangeMiddleware:
+        tags:
+            - { name: derafu_http.middleware, priority: 1200 }
+
     Derafu\Http\Middleware\RequestFactoryMiddleware:
         tags:
             - { name: derafu_http.middleware, priority: 900 }

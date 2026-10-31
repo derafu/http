@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsHttp;
 
 use Derafu\Http\Runtime;
+use Derafu\TestsHttp\Fixture\GeneratedStream;
 use Derafu\TestsHttp\Fixture\PhpInputStream;
 use Derafu\Translation\Contract\TranslatableInterface;
 use InvalidArgumentException;
@@ -357,5 +358,79 @@ final class RuntimeTest extends TestCase
 
         $this->assertNotNull($handler->request);
         $this->assertSame('', (string) $handler->request->getBody());
+    }
+
+    private function sendBody(\Psr\Http\Message\StreamInterface $body): string
+    {
+        $_SERVER = ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/'];
+
+        $handler = new class ($body) implements RequestHandlerInterface {
+            public function __construct(private readonly \Psr\Http\Message\StreamInterface $body)
+            {
+            }
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return (new Response(200))->withBody($this->body);
+            }
+        };
+
+        ob_start();
+        Runtime::run($handler);
+
+        return (string) ob_get_clean();
+    }
+
+    public function testABodyLargerThanOnePieceIsSentWhole(): void
+    {
+        $content = random_bytes(200000);
+
+        $this->assertSame($content, $this->sendBody((new Psr17Factory())->createStream($content)));
+    }
+
+    public function testTheBodyIsSentFromTheStartEvenIfItWasRead(): void
+    {
+        $stream = (new Psr17Factory())->createStream('0123456789');
+        $stream->read(6);
+
+        $this->assertSame('0123456789', $this->sendBody($stream));
+    }
+
+    public function testAnEmptyBodySendsNothing(): void
+    {
+        $this->assertSame('', $this->sendBody((new Psr17Factory())->createStream('')));
+    }
+
+    public function testABodyLargerThanTheMemoryIsSentInPieces(): void
+    {
+        $size = 512 * 1024 * 1024;
+        $sent = 0;
+        $peak = 0;
+        $base = memory_get_usage();
+
+        // The output is counted and thrown away as it comes: nothing keeps it.
+        $_SERVER = ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/'];
+        $handler = new class (new GeneratedStream($size)) implements RequestHandlerInterface {
+            public function __construct(private readonly GeneratedStream $body)
+            {
+            }
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return (new Response(200))->withBody($this->body);
+            }
+        };
+
+        ob_start(static function (string $buffer) use (&$sent, &$peak): string {
+            $sent += strlen($buffer);
+            $peak = max($peak, memory_get_usage());
+
+            return '';
+        }, 65536);
+        Runtime::run($handler);
+        ob_end_clean();
+
+        $this->assertSame($size, $sent);
+        $this->assertLessThan(32 * 1024 * 1024, $peak - $base, 'The body was held in memory.');
     }
 }

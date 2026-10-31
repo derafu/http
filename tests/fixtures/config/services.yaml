@@ -14,6 +14,9 @@ parameters:
         page:
             path: /page
             handler: '%kernel.project_dir%/tests/fixtures/services/page.html.twig'
+        download:
+            path: /download
+            handler: 'Derafu\TestsHttp\Fixture\Controller\DownloadController::index'
 
 services:
     _defaults:
@@ -45,4 +48,7 @@ services:
         tags: ['derafu_twig.template_path_provider']
 
     Derafu\TestsHttp\Fixture\Controller\HomeController:
+        public: true
+
+    Derafu\TestsHttp\Fixture\Controller\DownloadController:
         public: true

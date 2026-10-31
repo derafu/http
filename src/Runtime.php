@@ -34,6 +34,11 @@ use Psr\Http\Server\RequestHandlerInterface;
 final class Runtime
 {
     /**
+     * Bytes of the body that are sent each time.
+     */
+    private const CHUNK_SIZE = 65536;
+
+    /**
      * Runs the application.
      *
      * This method:
@@ -256,7 +261,23 @@ final class Runtime
         // Send HTTP status code.
         http_response_code($response->getStatusCode());
 
-        // Send response body.
-        echo $response->getBody();
+        // Send response body, in pieces: a large file is never read whole into
+        // memory, and the sending stops if the client leaves.
+        $body = $response->getBody();
+        if ($body->isSeekable()) {
+            $body->rewind();
+        }
+        while (!$body->eof()) {
+            $chunk = $body->read(self::CHUNK_SIZE);
+            if ($chunk === '') {
+                break;
+            }
+            echo $chunk;
+            flush();
+
+            if (connection_aborted() === 1) {
+                break;
+            }
+        }
     }
 }

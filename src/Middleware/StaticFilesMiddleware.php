@@ -115,16 +115,26 @@ class StaticFilesMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        // Get the file content (a HEAD response has no body).
-        $content = $method === 'HEAD' ? '' : file_get_contents($filePath);
-        if ($content === false) {
+        // Handle conditional requests (If-None-Match) before opening the file.
+        $etag = sprintf('"%x-%x"', filemtime($filePath), filesize($filePath));
+        $ifNoneMatch = $request->getHeaderLine('If-None-Match');
+        if ($ifNoneMatch && $ifNoneMatch === $etag) {
+            return new Response(304); // Not Modified.
+        }
+
+        // The file is sent as it is read, never loaded into memory (a HEAD
+        // response has no body).
+        $handle = $method === 'HEAD' ? false : fopen($filePath, 'rb');
+        if ($handle === false && $method !== 'HEAD') {
             // Couldn't read the file, continue to next middleware.
             return $handler->handle($request);
         }
 
-        // Create a response with the file content.
+        // Create a response with the file.
         $response = new Response();
-        $response = $response->withBody(Stream::create($content));
+        $response = $response->withBody(
+            Stream::create($handle === false ? '' : $handle)
+        );
 
         // Set content type based on extension.
         $response = $response->withHeader('Content-Type', $contentType->value);
@@ -137,6 +147,13 @@ class StaticFilesMiddleware implements MiddlewareInterface
             );
         }
 
+        // The size and the ranges, so a download can be resumed (see
+        // `RangeMiddleware`).
+        $response = $response
+            ->withHeader('Content-Length', (string) filesize($filePath))
+            ->withHeader('Accept-Ranges', 'bytes')
+        ;
+
         // Add cache headers.
         $response = $response->withHeader(
             'Cache-Control',
@@ -144,14 +161,7 @@ class StaticFilesMiddleware implements MiddlewareInterface
         );
 
         // Set ETag based on file modification time and size.
-        $etag = sprintf('"%x-%x"', filemtime($filePath), filesize($filePath));
         $response = $response->withHeader('ETag', $etag);
-
-        // Handle conditional requests (If-None-Match).
-        $ifNoneMatch = $request->getHeaderLine('If-None-Match');
-        if ($ifNoneMatch && $ifNoneMatch === $etag) {
-            return new Response(304); // Not Modified.
-        }
 
         return $response;
     }

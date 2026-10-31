@@ -15,6 +15,8 @@ namespace Derafu\Http\Contract;
 use Derafu\Http\Enum\ContentType;
 use Derafu\Http\Enum\HttpStatus;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
+use Psr\Http\Message\StreamInterface;
+use SplFileInfo;
 
 /**
  * Extended PSR-7 ResponseInterface with additional functionality.
@@ -73,6 +75,33 @@ interface ResponseInterface extends PsrResponseInterface
     public function asJson(
         mixed $data,
         int $flags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    ): static;
+
+    /**
+     * Creates a download response: the body is sent as a file that the client
+     * saves.
+     *
+     * The body is never read into memory, only sent in pieces, so the size of
+     * the file is not a limit. When the size is known the response has
+     * `Content-Length` and, if the body can be moved to any position, offers
+     * ranges (`Accept-Ranges`) to resume the download (see `RangeMiddleware`).
+     *
+     * @param string|StreamInterface|SplFileInfo|resource $source What to send:
+     * a string is always the content (never a path); a stream or a resource is
+     * sent as it is; a file is opened to be read, the path is the one of the
+     * file. Any other type is an error.
+     * @param string|null $filename Name that the client proposes. By default
+     * the one of the file, if the source is a file, otherwise none.
+     * @param ContentType $type Content type of the file.
+     * @param bool $deleteAfter Delete the file once it is opened to be sent, so
+     * a temporary file never stays. Only for a file as the source.
+     * @return static A new response instance.
+     */
+    public function asDownload(
+        mixed $source,
+        ?string $filename = null,
+        ContentType $type = ContentType::OCTET_STREAM,
+        bool $deleteAfter = false
     ): static;
 
     /**

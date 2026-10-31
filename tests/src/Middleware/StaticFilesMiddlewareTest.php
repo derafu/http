@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsHttp\Middleware;
 
 use Derafu\Http\Enum\ContentType;
+use Derafu\Http\Middleware\RangeMiddleware;
 use Derafu\Http\Middleware\StaticFilesMiddleware;
 use Derafu\Http\Response;
 use Derafu\TestsHttp\Fixture\RawPathUri;
@@ -40,6 +41,8 @@ use Psr\Http\Server\RequestHandlerInterface;
 #[CoversClass(StaticFilesMiddleware::class)]
 #[UsesClass(ContentType::class)]
 #[UsesClass(Response::class)]
+#[UsesClass(RangeMiddleware::class)]
+#[UsesClass(\Derafu\Http\Support\RangeStream::class)]
 class StaticFilesMiddlewareTest extends TestCase
 {
     private string $base;
@@ -368,5 +371,69 @@ class StaticFilesMiddlewareTest extends TestCase
         $response = (new StaticFilesMiddleware($this->directory))->process($request, $this->next());
 
         $this->assertNotServed($response);
+    }
+
+    public function testItTellsTheSizeAndOffersRanges(): void
+    {
+        $response = $this->process('/css/ok.css');
+
+        $this->assertSame('6', $response->getHeaderLine('Content-Length'));
+        $this->assertSame('bytes', $response->getHeaderLine('Accept-Ranges'));
+    }
+
+    public function testHeadTellsTheSizeOfTheFileWithoutBody(): void
+    {
+        $response = $this->process('/css/ok.css', null, 'HEAD');
+
+        $this->assertSame('6', $response->getHeaderLine('Content-Length'));
+        $this->assertSame('', (string) $response->getBody());
+    }
+
+    public function testTheFileIsSentAsAStreamAndNotLoadedIntoMemory(): void
+    {
+        $this->createFile('big/data.json', str_repeat('x', 100000));
+
+        $response = $this->process('/big/data.json');
+
+        $this->assertTrue($response->getBody()->isSeekable());
+        $this->assertSame(100000, $response->getBody()->getSize());
+        $this->assertSame(str_repeat('x', 100000), (string) $response->getBody());
+    }
+
+    public function testAnUnchangedFileIsNotOpened(): void
+    {
+        $first = $this->process('/css/ok.css');
+        $etag = $first->getHeaderLine('ETag');
+
+        $second = $this->process('/css/ok.css', null, 'GET', ['If-None-Match' => $etag]);
+
+        $this->assertSame(304, $second->getStatusCode());
+    }
+
+    public function testAPartOfTheFileIsServedWhenTheRangeMiddlewareRunsFirst(): void
+    {
+        $this->createFile('video/clip.json', '0123456789');
+        $static = new StaticFilesMiddleware($this->directory);
+        $handler = new class ($static, $this->next()) implements RequestHandlerInterface {
+            public function __construct(
+                private readonly StaticFilesMiddleware $static,
+                private readonly RequestHandlerInterface $next
+            ) {
+            }
+
+            public function handle(PsrRequestInterface $request): PsrResponseInterface
+            {
+                return $this->static->process($request, $this->next);
+            }
+        };
+
+        $request = new ServerRequest('GET', 'http://localhost/', ['Range' => 'bytes=3-5']);
+        $request = $request->withUri($request->getUri()->withPath('/video/clip.json'));
+
+        $response = (new RangeMiddleware())->process($request, $handler);
+
+        $this->assertSame(206, $response->getStatusCode());
+        $this->assertSame('345', (string) $response->getBody());
+        $this->assertSame('bytes 3-5/10', $response->getHeaderLine('Content-Range'));
     }
 }

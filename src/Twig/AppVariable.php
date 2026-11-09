@@ -96,7 +96,7 @@ final class AppVariable
      * The flash messages of the request, by type. Reading them does not take them
      * away: they can be read more than once in the same page.
      *
-     * @return array<string, mixed>
+     * @return array<array-key, mixed>
      */
     public function getFlashes(): array
     {

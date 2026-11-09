@@ -118,11 +118,14 @@ class HttpTest extends TestCase
         // The renderer says which template it was given and what for.
         $renderer = $this->createStub(RendererInterface::class);
         $renderer->method('render')->willReturnCallback(
-            fn (string $file, array $parameters): string => sprintf(
-                'PAGE %s %d',
-                basename($file),
-                $parameters['context']['error']->getStatus()
-            )
+            function (string $file, array $parameters): string {
+                $context = $parameters['context'] ?? null;
+                $this->assertIsArray($context);
+                $error = $context['error'] ?? null;
+                $this->assertInstanceOf(ProblemDetailInterface::class, $error);
+
+                return sprintf('PAGE %s %d', basename($file), $error->getStatus());
+            }
         );
         $dispatcher = new Dispatcher(new Invoker(null, $this->controllers()), $renderer, new RequestStack());
 

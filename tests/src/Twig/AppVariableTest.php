@@ -26,7 +26,9 @@ use Derafu\TestsHttp\Fixture\UnusedRenderer;
 use Invoker\Invoker;
 use Mezzio\Authentication\UserInterface;
 use Mezzio\Flash\FlashMessageMiddleware;
+use Mezzio\Flash\FlashMessages;
 use Mezzio\Flash\FlashMessagesInterface;
+use Mezzio\Session\Session;
 use Mezzio\Session\SessionInterface;
 use Mezzio\Session\SessionMiddleware;
 use Nyholm\Psr7\ServerRequest;
@@ -208,5 +210,17 @@ final class AppVariableTest extends TestCase
 
         $this->handle([UserInterface::class => $user]);
         $this->assertSame('Hello ana', $twig->render('menu'));
+    }
+
+    #[Test]
+    public function numericFlashNamesArePreservedAndReadingDoesNotConsumeThem(): void
+    {
+        $flash = FlashMessages::createFromSession(new Session([]));
+        $flash->flashNow('404', 'The requested page was not found.');
+        $this->handle([FlashMessageMiddleware::FLASH_ATTRIBUTE => $flash]);
+        $expected = [404 => 'The requested page was not found.'];
+
+        $this->assertSame($expected, $this->app->getFlashes());
+        $this->assertSame($expected, $flash->getFlashes());
     }
 }

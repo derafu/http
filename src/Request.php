@@ -44,7 +44,7 @@ class Request implements RequestInterface
      * @param array<string,string|list<string>> $headers Request headers.
      * @param string|resource|StreamInterface|null $body Request body.
      * @param string $version Protocol version.
-     * @param array<string,mixed> $serverParams Typically the $_SERVER superglobal.
+     * @param array<array-key,mixed> $serverParams Typically the $_SERVER superglobal.
      */
     public function __construct(
         string $method,
@@ -389,7 +389,7 @@ class Request implements RequestInterface
     /**
      * {@inheritDoc}
      *
-     * @return array<string,mixed>
+     * @return array<array-key,mixed>
      */
     public function getAttributes(): array
     {

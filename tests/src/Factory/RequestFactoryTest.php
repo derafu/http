@@ -64,4 +64,27 @@ final class RequestFactoryTest extends TestCase
 
         $this->assertSame(['x'], $request->getHeader('123'));
     }
+
+    public function testNumericAttributeNamesArePreservedDuringPsrConversion(): void
+    {
+        $value = ['id' => 123, 'enabled' => false];
+        $psr = (new ServerRequest('GET', 'http://localhost/'))->withAttribute('123', $value);
+
+        $request = (new RequestFactory())->createFromPsrRequest($psr);
+
+        $this->assertSame($psr->getAttributes(), $request->getAttributes());
+        $this->assertSame($value, $request->getAttribute('123'));
+        $this->assertSame($value, $psr->getAttribute('123'));
+    }
+
+    public function testServerParametersKeepTheirKeysAndValuesDuringPsrConversion(): void
+    {
+        $parameters = [7 => ['custom' => true], 'REMOTE_ADDR' => '10.0.0.1'];
+        $psr = new ServerRequest('GET', 'http://localhost/', serverParams: $parameters);
+
+        $request = (new RequestFactory())->createFromPsrRequest($psr);
+
+        $this->assertSame($parameters, $request->getServerParams());
+        $this->assertSame($parameters, $psr->getServerParams());
+    }
 }

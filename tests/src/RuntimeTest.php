@@ -16,10 +16,12 @@ use Derafu\Http\Runtime;
 use Derafu\TestsHttp\Fixture\GeneratedStream;
 use Derafu\TestsHttp\Fixture\PhpInputStream;
 use Derafu\Translation\Contract\TranslatableInterface;
+use Derafu\Value\Exception\TypeMismatchException;
 use InvalidArgumentException;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -36,7 +38,7 @@ use Throwable;
 #[CoversClass(Runtime::class)]
 final class RuntimeTest extends TestCase
 {
-    /** @var array<string, mixed> */
+    /** @var array<array-key, mixed> */
     private array $server = [];
 
     protected function setUp(): void
@@ -232,6 +234,30 @@ final class RuntimeTest extends TestCase
         $_SERVER = ['SERVER_PORT' => '443'];
 
         $this->assertSame('https', Runtime::getApplicationContext()['URL_SCHEME']);
+    }
+
+    #[TestWith([true])]
+    #[TestWith([false])]
+    public function testTheApplicationContextRejectsNumericVariableNames(bool $fromEnvironment): void
+    {
+        $environment = $_ENV;
+        $server = $_SERVER;
+
+        try {
+            if ($fromEnvironment) {
+                $_ENV[-1] = 'invalid variable name';
+            } else {
+                $_SERVER[-1] = 'invalid variable name';
+            }
+
+            $this->expectException(TypeMismatchException::class);
+            $this->expectExceptionMessage('The value at "$" of HTTP application context must be of type map, array given.');
+
+            Runtime::getApplicationContext();
+        } finally {
+            $_ENV = $environment;
+            $_SERVER = $server;
+        }
     }
 
     public function testTheRequestIsBuiltFromTheSuperglobals(): void

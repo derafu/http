@@ -38,7 +38,17 @@ final class HttpTranslationResourceProviderTest extends TestCase
         $file = $directories[0] . '/errors+intl-icu.es.php';
         $this->assertFileExists($file);
 
-        return require $file;
+        $catalog = require $file;
+        $this->assertIsArray($catalog);
+
+        $validated = [];
+        foreach ($catalog as $message => $translation) {
+            $this->assertIsString($message);
+            $this->assertIsString($translation);
+            $validated[$message] = $translation;
+        }
+
+        return $validated;
     }
 
     public function testEveryReasonPhraseOfAStatusIsTranslated(): void

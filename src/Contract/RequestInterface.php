@@ -82,7 +82,8 @@ interface RequestInterface extends ServerRequestInterface
     /**
      * Gets all input data (query + post + json).
      *
-     * @return array<string,mixed>
+     * @return array<array-key,mixed> Input data, including numeric keys of JSON
+     * lists and numeric parameter names.
      */
     public function all(): array;
 
@@ -99,7 +100,8 @@ interface RequestInterface extends ServerRequestInterface
      * Gets multiple input values.
      *
      * @param array<string> $keys The parameter names.
-     * @return array<string,mixed> The found parameters.
+     * @return array<array-key,mixed> The found parameters. Numeric string names
+     * can be integer keys in the returned PHP array.
      */
     public function only(array $keys): array;
 

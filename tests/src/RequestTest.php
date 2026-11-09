@@ -76,6 +76,15 @@ final class RequestTest extends TestCase
         $this->assertSame([1, 2], $request->json());
     }
 
+    public function testJsonListIndexesAreAvailableThroughInputAccessors(): void
+    {
+        $request = new Request('POST', 'http://localhost/', ['Content-Type' => 'application/json'], '[{"id":1},{"id":2}]');
+
+        $this->assertSame([['id' => 1], ['id' => 2]], $request->all());
+        $this->assertSame(['id' => 1], $request->input('0'));
+        $this->assertSame([1 => ['id' => 2]], $request->only(['1']));
+    }
+
     public function testAFileIsTheOneOfTheField(): void
     {
         $file = new UploadedFile('content', 7, UPLOAD_ERR_OK);

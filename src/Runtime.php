@@ -13,6 +13,8 @@ declare(strict_types=1);
 namespace Derafu\Http;
 
 use Derafu\Array\ArrayReader;
+use Derafu\Value\Exception\TypeMismatchException;
+use Derafu\Value\ValueType;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UploadedFileInterface;
@@ -116,11 +118,12 @@ final class Runtime
      *   - Server information.
      *
      * @return array<string, mixed> The application context.
+     * @throws TypeMismatchException If the combined context has non-string keys.
      */
     public static function getApplicationContext(): array
     {
         // Merge server and environment variables.
-        $context = array_merge($_SERVER, $_ENV);
+        $context = ValueType::map()->parse(array_merge($_SERVER, $_ENV), source: 'HTTP application context');
 
         // Application environment settings.
         $context['APP_ENV'] = $context['APP_ENV'] ?? 'dev';

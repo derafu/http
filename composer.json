@@ -33,6 +33,7 @@
         "derafu/renderer": "dev-main",
         "derafu/translation": "dev-main",
         "derafu/twig": "dev-main",
+        "derafu/value": "dev-main",
         "psr/http-server-handler": "^1.0",
         "psr/http-server-middleware": "^1.0",
         "php-di/invoker": "^2.3",

@@ -52,7 +52,7 @@ class RequestFactory implements RequestFactoryInterface
 
         // Copy attributes one by one.
         foreach ($request->getAttributes() as $attribute => $value) {
-            $newRequest = $newRequest->withAttribute($attribute, $value);
+            $newRequest = $newRequest->withAttribute((string) $attribute, $value);
         }
 
         return $newRequest;

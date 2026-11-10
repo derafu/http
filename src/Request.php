@@ -41,7 +41,7 @@ class Request implements RequestInterface
     /**
      * @param string $method HTTP method.
      * @param string|UriInterface $uri URI.
-     * @param array<string,string|list<string>> $headers Request headers.
+     * @param array<array-key,string|list<string>> $headers Request headers.
      * @param string|resource|StreamInterface|null $body Request body.
      * @param string $version Protocol version.
      * @param array<array-key,mixed> $serverParams Typically the $_SERVER superglobal.
